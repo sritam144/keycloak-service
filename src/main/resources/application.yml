@@ -47,5 +47,15 @@ keycloak:
   bearer-only: true
   credentials:
     secret: d8cdda82-d9c1-4fe2-8d00-24fd49311511    
-    
-    
+
+
+
+#app.base.url: http://localhost:8080/auth/realms/asiczen-fleet/protocol/openid-connect/userinfo
+#app.url.token: http://localhost:8080/auth/realms/asiczen-fleet/protocol/openid-connect/token
+#app.url.user: http://localhost:8080/auth/admin/realms/asiczen-fleet/users
+app.base.url: http://localhost:8080/auth/realms/asiczen-fleet/protocol/openid-connect
+app.url.token: ${app.base.url}/token
+app.url.userinfo: ${app.base.url}/userinfo
+app.url.user: http://localhost:8080/auth/admin/realms/asiczen-fleet/users
+app.url.logout: http://localhost:8080/auth/admin/realms/asiczen-fleet/users/{id}/logout
+app.url.passreset: http://localhost:8080/auth/admin/realms/asiczen-fleet/users/{id}/reset-password     

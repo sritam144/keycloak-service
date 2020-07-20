@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -23,11 +24,13 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpClientErrorException.Unauthorized;
 import org.springframework.web.client.RestTemplate;
 
+import com.asiczen.identity.management.dto.UserInfo;
 import com.asiczen.identity.management.exception.AccessisDeniedException;
 import com.asiczen.identity.management.exception.InternalServerError;
 import com.asiczen.identity.management.exception.ResourceAlreadyExistException;
 import com.asiczen.identity.management.request.UserCredentials;
 import com.asiczen.identity.management.request.UserDto;
+import com.asiczen.identity.management.response.CurrentUserResponse;
 import com.asiczen.identity.management.response.LoginResponse;
 import com.asiczen.identity.management.response.RefreshTokenResponse;
 import com.asiczen.identity.management.service.KeyCloakService;
@@ -50,20 +53,23 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 	@Value("${keycloak.realm}")
 	private String REALM;
 
-	private String TOKENURL = "http://localhost:8080/auth/realms/asiczen-fleet/protocol/openid-connect/token";
-	private String USERADDURL = "http://localhost:8080/auth/admin/realms/asiczen-fleet/users";
+	@Value("${app.url.token}")
+	private String TOKENURL;
+
+	@Value("${app.url.user}")
+	private String USERADDURL;
+
+	@Value("${app.url.userinfo}")
+	private String USERINFO;
+
+	@Value("${app.url.logout}")
+	private String LOGOUTURL;
+
+	@Value("${app.url.passreset}")
+	private String PASSRESET;
 
 	@Autowired
 	RestTemplate restTemplate;
-
-//	@Autowired
-//	UtilityServiceKeyCloak KeyCloakUtility;
-
-	public void test(Principal principal) {
-		UsersResource userResource = getKeycloakUserResource();
-		System.out.println(userResource.get("b2ffe0b6-b606-4693-bc7c-ce158d018db9").roles().getAll().toString());
-
-	}
 
 	@Override
 	public LoginResponse getToken(UserCredentials userCredentials) {
@@ -186,6 +192,8 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 
 			if (response.getStatusCodeValue() == 201) {
 				returnResponse = "user created successfully";
+			} else {
+				returnResponse = "some issue while creating user";
 			}
 
 			return returnResponse;
@@ -208,53 +216,121 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 	}
 
 	@Override
-	public void logoutUser(String userId) {
+	public void logoutUser(String token) {
 
-		UsersResource userRessource = getKeycloakUserResource();
-		userRessource.get(userId).logout();
-	}
+		CurrentUserResponse response = getCurrentUserInfo(token);
+		String currentUserid = response.getUuid();
 
-	@Override
-	public void resetPassword(String newPassword, String userId) {
+		log.trace("Current user: {}", response.getUuid());
+		log.trace("Current email id {}", response.getEmailid());
+		log.trace("Given user name {}", response.getGiven_name());
 
-		UsersResource userResource = getKeycloakUserResource();
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.add("Authorization", token);
+		HttpEntity<Object> request = new HttpEntity<>(headers);
 
-		CredentialRepresentation passwordCred = new CredentialRepresentation();
-		passwordCred.setTemporary(false);
-		passwordCred.setType(CredentialRepresentation.PASSWORD);
-		passwordCred.setValue(newPassword.toString().trim());
+		Map<String, String> params = new HashMap<String, String>();
+		params.put("id", currentUserid);
 
-		// Set password credential
 		try {
-			userResource.get(userId).resetPassword(passwordCred);
+			ResponseEntity<?> responseobj = restTemplate.postForEntity(LOGOUTURL, request, Object.class, params);
+
+			if (responseobj.getStatusCodeValue() != 204) {
+				log.error("Error while occured while terminating the session {} ", responseobj.getStatusCodeValue());
+			} else {
+				log.info("Successfully logged out of the system");
+			}
+
 		} catch (Exception ep) {
-			log.error("Error in reseting password. Please try again {}" + ep.getLocalizedMessage());
+			log.error("Error while logout. {} ", ep.getMessage());
 		}
 
 	}
 
-	public UsersResource getKeycloakUserResource() {
+//	@Override
+//	public void resetPassword(String newPassword, String userId) {
+//
+//		UsersResource userResource = getKeycloakUserResource();
+//
+//		CredentialRepresentation passwordCred = new CredentialRepresentation();
+//		passwordCred.setTemporary(false);
+//		passwordCred.setType(CredentialRepresentation.PASSWORD);
+//		passwordCred.setValue(newPassword.toString().trim());
+//
+//		// Set password credential
+//		try {
+//			userResource.get(userId).resetPassword(passwordCred);
+//		} catch (Exception ep) {
+//			log.error("Error in reseting password. Please try again {}" + ep.getLocalizedMessage());
+//		}
+//
+//	}
 
-		Keycloak kc = KeycloakBuilder.builder().serverUrl(AUTHURL).realm(REALM).username("sanjeet215@gmail.com")
-				.password("password").clientId("CLIENTID")
-				.resteasyClient(new ResteasyClientBuilder().connectionPoolSize(10).build()).build();
+//	public UsersResource getKeycloakUserResource() {
+//
+//		Keycloak kc = KeycloakBuilder.builder().serverUrl(AUTHURL).realm(REALM).username("sanjeet215@gmail.com")
+//				.password("password").clientId("CLIENTID")
+//				.resteasyClient(new ResteasyClientBuilder().connectionPoolSize(10).build()).build();
+//
+//		RealmResource realmResource = kc.realm(REALM);
+//		UsersResource userRessource = realmResource.users();
+//
+//		return userRessource;
+//	}
 
-		RealmResource realmResource = kc.realm(REALM);
-		UsersResource userRessource = realmResource.users();
+//	private RealmResource getRealmResource() {
+//
+//		Keycloak kc = KeycloakBuilder.builder().serverUrl(AUTHURL).realm(REALM).username("sanjeet215@gmail.com")
+//				.password("password").clientId("CLIENTID")
+//				.resteasyClient(new ResteasyClientBuilder().connectionPoolSize(10).build()).build();
+//
+//		RealmResource realmResource = kc.realm(REALM);
+//
+//		return realmResource;
+//
+//	}
 
-		return userRessource;
+	/* This method returns current user information . Based on the supplied token */
+
+	@Override
+	public CurrentUserResponse getCurrentUserInfo(String token) {
+
+		CurrentUserResponse currentuserinfo = new CurrentUserResponse();
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.add("Authorization", token);
+		HttpEntity<Object> request = new HttpEntity<>(headers);
+
+		try {
+			ResponseEntity<UserInfo> response = restTemplate.exchange(USERINFO, HttpMethod.GET, request,
+					UserInfo.class);
+
+			currentuserinfo.setUuid(response.getBody().getSub());
+			currentuserinfo.setEmailid(response.getBody().getEmail());
+			currentuserinfo.setGiven_name(response.getBody().getGiven_name());
+
+		} catch (HttpClientErrorException.Forbidden ep) {
+			log.error("Resource is forbidden");
+			throw new AccessisDeniedException("Access is denied");
+		} catch (HttpClientErrorException.Unauthorized ep) {
+			throw new AccessisDeniedException("Access is denied");
+		} catch (Exception ep) {
+			throw new InternalServerError(ep.getLocalizedMessage());
+		}
+
+		log.trace("User info {} ", currentuserinfo.toString());
+
+		return currentuserinfo;
 	}
 
-	private RealmResource getRealmResource() {
-
-		Keycloak kc = KeycloakBuilder.builder().serverUrl(AUTHURL).realm(REALM).username("sanjeet215@gmail.com")
-				.password("password").clientId("CLIENTID")
-				.resteasyClient(new ResteasyClientBuilder().connectionPoolSize(10).build()).build();
-
-		RealmResource realmResource = kc.realm(REALM);
-
-		return realmResource;
-
+	/*
+	 * Set up a new password for the user. password reset
+	 */
+	@Override
+	public void resetPassword(String newPassword, String userId) {
+		// PASSRESET
 	}
 
 }

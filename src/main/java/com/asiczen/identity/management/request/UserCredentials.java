@@ -8,7 +8,7 @@ import javax.validation.constraints.Size;
 import lombok.Data;
 
 @Data
-public class UserCredentials implements Serializable{
+public class UserCredentials implements Serializable {
 
 	private static final long serialVersionUID = -7233153334484992795L;
 

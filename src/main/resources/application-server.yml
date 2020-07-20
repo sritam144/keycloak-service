@@ -1,0 +1,52 @@
+server:
+  port: 9092
+  
+spring:
+  application:
+    name: keycloak-services  
+    
+  datasource:
+    url: jdbc:mysql://localhost:3306/fleetdb
+    username: root
+    password: mysqlroot
+    dbcp2:
+      validation-query: SELECT 1
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+        format_sql: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8082/auth/realms/scorpious_dev
+      client:
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8082/auth/realms/scorpious_dev
+            user-name-attribute: preferred_username
+
+logging:
+  level:
+    com.asiczen: TRACE      
+
+eureka:
+  client:
+    enabled: false
+    
+keycloak:
+  realm: scorpious_dev
+  auth-server-url: http://localhost:8082/auth
+  ssl-required: external
+  resource: springboot-microservice
+  use-resource-role-mappings: true
+  bearer-only: true
+  credentials:
+    secret: 442a6cc7-05e0-4816-8ab3-6f5b2175c4c1    
+    
+app.url.token: http://localhost:8082/auth/realms/scorpious_dev/protocol/openid-connect/token
+app.url.user: http://localhost:8082/auth/admin/realms/scorpious_dev/users

@@ -38,16 +38,11 @@ public class KeyCloakController {
 
 		log.trace("User login process started ..");
 		log.trace("Connecting keycloak service to get access token and refersh token ..");
-
-//		return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(HttpStatus.OK.value(),
-//				"Organization Created Successfully", keyClockService.getToken(userCredentials)));
 		return new ResponseEntity<>(keyClockService.getToken(userCredentials), HttpStatus.OK);
 	}
 
 	@GetMapping(value = "/refreshtoken")
-	// public ResponseEntity<?> getTokenUsingRefreshToken(@RequestHeader(value =
-	// "Authorization") String refreshToken) {
-	@RolesAllowed({ "user" })
+	@RolesAllowed({ "user", "admin" })
 	public ResponseEntity<?> getTokenUsingRefreshToken(@Valid @RequestParam String refreshToken) {
 
 		return new ResponseEntity<>(keyClockService.getByRefreshToken(refreshToken), HttpStatus.OK);
@@ -55,7 +50,7 @@ public class KeyCloakController {
 	}
 
 	@PostMapping(value = "/createuser")
-	@RolesAllowed({ "user", "admin" })
+	@RolesAllowed({ "admin" })
 	public ResponseEntity<?> createUserinKeyCloak(@Valid @RequestBody UserDto userDto,
 			@RequestHeader String Authorization) {
 
@@ -66,15 +61,24 @@ public class KeyCloakController {
 		return new ResponseEntity<>(keyClockService.createUserInKeyCloak(userDto, Authorization), HttpStatus.CREATED);
 	}
 
+//	@PutMapping(value = "/updateuser")
+//	@RolesAllowed({"admin"})
+//	public ResponseEntity<?> updateKeycloakUser() {
+//		
+//	}
+
+	@GetMapping(value = "/currentuser")
+	@RolesAllowed({ "admin" })
+	public ResponseEntity<?> getCurrentUser(@RequestHeader String Authorization) {
+		return new ResponseEntity<>(keyClockService.getCurrentUserInfo(Authorization), HttpStatus.OK);
+	}
+
 	@GetMapping(value = "/logout")
-	public ResponseEntity<?> logoutUser(HttpServletRequest request) {
+	public ResponseEntity<?> logoutUser(@RequestHeader String Authorization) {
 
-		request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-		AccessToken token = ((KeycloakPrincipal<?>) request.getUserPrincipal()).getKeycloakSecurityContext().getToken();
+		log.trace("Bearer token: {} ", Authorization);
 
-		String userId = token.getSubject();
-		keyClockService.logoutUser(userId);
-
+		keyClockService.logoutUser(Authorization);
 		return new ResponseEntity<>("Hi!, you have logged out successfully!", HttpStatus.OK);
 	}
 
