@@ -32,7 +32,10 @@ spring:
 
 logging:
   level:
-    com.asiczen: TRACE      
+    root: ERROR
+    org.springframework.web: ERROR
+    org.springframework.security: DEBUG
+    com.asiczen: TRACE   
 
 eureka:
   client:

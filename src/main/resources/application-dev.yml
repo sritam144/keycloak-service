@@ -30,10 +30,6 @@ spring:
             issuer-uri: http://localhost:8082/auth/realms/scorpious_dev
             user-name-attribute: preferred_username
 
-logging:
-  level:
-    com.asiczen: TRACE      
-
 eureka:
   client:
     enabled: false
@@ -48,5 +44,22 @@ keycloak:
   credentials:
     secret: 442a6cc7-05e0-4816-8ab3-6f5b2175c4c1    
     
-app.url.token: http://localhost:8082/auth/realms/scorpious_dev/protocol/openid-connect/token
+#app.url.token: http://localhost:8082/auth/realms/scorpious_dev/protocol/openid-connect/token
+#app.url.user: http://localhost:8082/auth/admin/realms/scorpious_dev/users
+app.base.url: http://localhost:8082/auth/realms/scorpious_dev/protocol/openid-connect
+app.url.token: ${app.base.url}/token
+app.url.userinfo: ${app.base.url}/userinfo
 app.url.user: http://localhost:8082/auth/admin/realms/scorpious_dev/users
+app.url.logout: http://localhost:8082/auth/admin/realms/scorpious_dev/users/{id}/logout
+app.url.passreset: http://localhost:8082/auth/admin/realms/scorpious_dev/users/{id}/reset-password    
+
+
+logging:
+  level:
+    root: ERROR
+    org.springframework.web: ERROR
+    org.springframework.security: DEBUG
+    com.asiczen: TRACE
+  file:
+    name: /home/lora/webApplications/app-logs/key-cloak-service.log
+    max-size: 10 MB

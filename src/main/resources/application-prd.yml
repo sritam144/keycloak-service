@@ -1,0 +1,66 @@
+server:
+  port: 9092
+  
+spring:
+  application:
+    name: keycloak-services  
+    
+  datasource:
+    url: jdbc:mysql://localhost:3306/fleetdb
+    username: root
+    password: Manager@123
+    dbcp2:
+      validation-query: SELECT 1
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+        format_sql: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${base.url}/realms/scorpious
+      client:
+        provider:
+          keycloak:
+            issuer-uri: ${base.url}/realms/scorpious
+            user-name-attribute: preferred_username
+
+eureka:
+  client:
+    enabled: false
+    
+keycloak:
+  realm: scorpious
+  auth-server-url: ${base.url}
+  ssl-required: external
+  resource: springboot-microservice
+  use-resource-role-mappings: true
+  bearer-only: true
+  credentials:
+    secret: 2df239f3-c0d3-4780-b941-7b83667f8b13    
+
+
+app.realm: scorpious
+base.url: http://localhost:8090/auth    
+app.base.url: ${base.url}/realms/${app.realm}/protocol/openid-connect
+app.url.token: ${app.base.url}/token
+app.url.userinfo: ${app.base.url}/userinfo
+app.url.user: ${base.url}/admin/realms/${app.realm}/users
+app.url.logout: ${base.url}/admin/realms/${app.realm}/users/{id}/logout
+app.url.passreset: ${base.url}/admin/realms/${app.realm}/users/{id}/reset-password    
+
+
+logging:
+  level:
+    root: ERROR
+    org.springframework.web: ERROR
+    org.springframework.security: DEBUG
+    com.asiczen: TRACE
+  file:
+    name: /home/ubuntu/scorpious/app-logs/key-cloak-service.log
+    max-size: 10 MB

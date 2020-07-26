@@ -14,6 +14,8 @@ import org.springframework.security.core.authority.mapping.SimpleAuthorityMapper
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @EnableWebSecurity
@@ -24,7 +26,8 @@ public class KeycloakSecurityConfig extends KeycloakWebSecurityConfigurerAdapter
 	protected void configure(HttpSecurity http) throws Exception {
 		super.configure(http);
 		http.authorizeRequests().anyRequest().permitAll();
-		http.csrf().disable();
+		http.cors().and().csrf().disable();
+
 	}
 
 	@Autowired
@@ -44,4 +47,18 @@ public class KeycloakSecurityConfig extends KeycloakWebSecurityConfigurerAdapter
 	public KeycloakSpringBootConfigResolver KeycloakSpringBootConfigResolver() {
 		return new KeycloakSpringBootConfigResolver();
 	}
+	
+//	@Bean
+//	public WebMvcConfigurer corsConfigurer() {
+//		
+//		System.out.println("I am executed");
+//		
+//		return new WebMvcConfigurer() {
+//			public void addCorsMappings(CorsRegistry registry) {
+//						registry.addMapping("/api/**")
+//								.allowedOrigins("*")
+//								.allowedMethods("GET","POST","PUT","DELETE").allowedHeaders("*");
+//			}
+//		};
+//	}
 }
