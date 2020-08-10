@@ -1,6 +1,5 @@
 package com.asiczen.identity.management.controller;
 
-import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
@@ -9,7 +8,7 @@ import org.keycloak.representations.AccessToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/user")
-//@CrossOrigin(origins = "http://192.168.2.202:82", maxAge = 3600)
 @Slf4j
 public class KeyCloakController {
 
@@ -44,7 +42,6 @@ public class KeyCloakController {
 	}
 
 	@GetMapping(value = "/refreshtoken")
-	@RolesAllowed({ "user", "admin" })
 	public ResponseEntity<?> getTokenUsingRefreshToken(@Valid @RequestParam String refreshToken) {
 
 		return new ResponseEntity<>(keyClockService.getByRefreshToken(refreshToken), HttpStatus.OK);
@@ -52,7 +49,7 @@ public class KeyCloakController {
 	}
 
 	@PostMapping(value = "/createuser")
-	@RolesAllowed({ "admin" })
+	@PreAuthorize("hasRole('ROLE_ADMIN')")
 	public ResponseEntity<?> createUserinKeyCloak(@Valid @RequestBody UserDto userDto,
 			@RequestHeader String Authorization) {
 
@@ -70,7 +67,6 @@ public class KeyCloakController {
 //	}
 
 	@GetMapping(value = "/currentuser")
-	@RolesAllowed({ "admin" })
 	public ResponseEntity<?> getCurrentUser(@RequestHeader String Authorization) {
 		return new ResponseEntity<>(keyClockService.getCurrentUserInfo(Authorization), HttpStatus.OK);
 	}

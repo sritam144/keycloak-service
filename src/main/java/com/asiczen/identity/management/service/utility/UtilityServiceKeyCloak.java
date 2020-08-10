@@ -29,15 +29,15 @@ public class UtilityServiceKeyCloak {
 		return userRessource;
 	}
 
-	private RealmResource getRealmResource() {
-
-		Keycloak kc = KeycloakBuilder.builder().serverUrl(AUTHURL).realm("master").username("admin").password("admin")
-				.clientId("admin-cli").resteasyClient(new ResteasyClientBuilder().connectionPoolSize(10).build())
-				.build();
-
-		RealmResource realmResource = kc.realm(REALM);
-
-		return realmResource;
-
-	}
+//	private RealmResource getRealmResource() {
+//
+//		Keycloak kc = KeycloakBuilder.builder().serverUrl(AUTHURL).realm("master").username("admin").password("admin")
+//				.clientId("admin-cli").resteasyClient(new ResteasyClientBuilder().connectionPoolSize(10).build())
+//				.build();
+//
+//		RealmResource realmResource = kc.realm(REALM);
+//
+//		return realmResource;
+//
+//	}
 }

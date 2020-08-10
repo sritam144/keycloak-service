@@ -1,15 +1,8 @@
 package com.asiczen.identity.management.service.impl;
 
-import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
-import org.keycloak.admin.client.Keycloak;
-import org.keycloak.admin.client.KeycloakBuilder;
-import org.keycloak.admin.client.resource.RealmResource;
-import org.keycloak.admin.client.resource.UsersResource;
-import org.keycloak.representations.idm.CredentialRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -144,7 +137,7 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 			tokenResponse.setAccess_token(response.getBody().getAccess_token());
 			tokenResponse.setExpires_in(response.getBody().getExpires_in());
 			tokenResponse.setRefresh_token(response.getBody().getRefresh_token());
-			tokenResponse.setRefresh_expires_in(response.getBody().getExpires_in());
+			tokenResponse.setRefresh_expires_in(response.getBody().getRefresh_expires_in());
 
 			return tokenResponse;
 

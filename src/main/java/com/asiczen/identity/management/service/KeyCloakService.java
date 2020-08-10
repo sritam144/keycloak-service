@@ -1,7 +1,5 @@
 package com.asiczen.identity.management.service;
 
-import java.security.Principal;
-
 import org.springframework.stereotype.Service;
 
 import com.asiczen.identity.management.request.UserCredentials;

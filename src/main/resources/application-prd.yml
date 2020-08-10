@@ -35,17 +35,17 @@ eureka:
     enabled: false
     
 keycloak:
-  realm: scorpious
+  realm: scorpious_fleet
   auth-server-url: ${base.url}
   ssl-required: external
   resource: springboot-microservice
   use-resource-role-mappings: true
   bearer-only: true
   credentials:
-    secret: 2df239f3-c0d3-4780-b941-7b83667f8b13    
+    secret: e50bb4d9-d062-4234-96eb-3e7d88fdfac4    
 
 
-app.realm: scorpious
+app.realm: scorpious_fleet
 base.url: http://localhost:8090/auth    
 app.base.url: ${base.url}/realms/${app.realm}/protocol/openid-connect
 app.url.token: ${app.base.url}/token
