@@ -14,4 +14,5 @@ public class CurrentUserResponse {
 	String uuid;
 	String emailid;
 	String given_name;
+	String orgRefName;
 }

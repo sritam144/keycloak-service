@@ -60,15 +60,13 @@ public class KeyCloakController {
 		return new ResponseEntity<>(keyClockService.createUserInKeyCloak(userDto, Authorization), HttpStatus.CREATED);
 	}
 
-//	@PutMapping(value = "/updateuser")
-//	@RolesAllowed({"admin"})
-//	public ResponseEntity<?> updateKeycloakUser() {
-//		
-//	}
 
 	@GetMapping(value = "/currentuser")
 	public ResponseEntity<?> getCurrentUser(@RequestHeader String Authorization) {
-		return new ResponseEntity<>(keyClockService.getCurrentUserInfo(Authorization), HttpStatus.OK);
+		return new ResponseEntity<>(keyClockService.getUserwithAttributes(Authorization), HttpStatus.OK);
+		// return new
+		// ResponseEntity<>(keyClockService.getCurrentUserInfo(Authorization),
+		// HttpStatus.OK);
 	}
 
 	@GetMapping(value = "/logout")

@@ -34,8 +34,8 @@ logging:
   level:
     root: ERROR
     org.springframework.web: ERROR
-    org.springframework.security: DEBUG
-    com.asiczen: TRACE   
+    org.springframework.security: INFO
+    com.asiczen: INFO   
 
 eureka:
   client:

@@ -18,6 +18,7 @@ import org.springframework.web.client.HttpClientErrorException.Unauthorized;
 import org.springframework.web.client.RestTemplate;
 
 import com.asiczen.identity.management.dto.UserInfo;
+import com.asiczen.identity.management.dto.UserRepresentation;
 import com.asiczen.identity.management.exception.AccessisDeniedException;
 import com.asiczen.identity.management.exception.InternalServerError;
 import com.asiczen.identity.management.exception.ResourceAlreadyExistException;
@@ -300,6 +301,8 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 			ResponseEntity<UserInfo> response = restTemplate.exchange(USERINFO, HttpMethod.GET, request,
 					UserInfo.class);
 
+			log.trace("Response Body {}", response.getBody().toString());
+
 			currentuserinfo.setUuid(response.getBody().getSub());
 			currentuserinfo.setEmailid(response.getBody().getEmail());
 			currentuserinfo.setGiven_name(response.getBody().getGiven_name());
@@ -324,6 +327,24 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 	@Override
 	public void resetPassword(String newPassword, String userId) {
 		// PASSRESET
+	}
+
+	@Override
+	public CurrentUserResponse getUserwithAttributes(String token) {
+		CurrentUserResponse response = this.getCurrentUserInfo(token);
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.add("Authorization", token);
+		HttpEntity<Object> request = new HttpEntity<>(headers);
+
+		ResponseEntity<UserRepresentation> userinfo = restTemplate.exchange(USERADDURL + "/" + response.getUuid(),
+				HttpMethod.GET, request, UserRepresentation.class);
+
+		response.setEmailid(userinfo.getBody().getUsername());
+		response.setOrgRefName(userinfo.getBody().getAttributes().getOrgRefName().get(0));
+
+		return response;
 	}
 
 }
