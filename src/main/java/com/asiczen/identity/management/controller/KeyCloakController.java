@@ -64,9 +64,6 @@ public class KeyCloakController {
 	@GetMapping(value = "/currentuser")
 	public ResponseEntity<?> getCurrentUser(@RequestHeader String Authorization) {
 		return new ResponseEntity<>(keyClockService.getUserwithAttributes(Authorization), HttpStatus.OK);
-		// return new
-		// ResponseEntity<>(keyClockService.getCurrentUserInfo(Authorization),
-		// HttpStatus.OK);
 	}
 
 	@GetMapping(value = "/logout")

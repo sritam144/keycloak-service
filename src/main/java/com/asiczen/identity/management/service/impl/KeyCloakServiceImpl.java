@@ -96,6 +96,7 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 			loginResponse.setRefresh_token(response.getBody().getRefresh_token());
 			loginResponse.setRefresh_expires_in(response.getBody().getRefresh_expires_in());
 			loginResponse.setExpires_in(response.getBody().getExpires_in());
+			loginResponse.setOrgRefName(getUserwithAttributes(response.getBody().getAccess_token()).getOrgRefName());
 
 			/* Test Code */
 

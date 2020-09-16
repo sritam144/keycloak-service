@@ -5,10 +5,9 @@ import lombok.Data;
 @Data
 public class LoginResponse {
 
-	String access_token;
-	String refresh_token;
-	int expires_in;
-	int refresh_expires_in;
-	String role;
-	String preferredName;
+	private String access_token;
+	private String refresh_token;
+	private int expires_in;
+	private int refresh_expires_in;
+	private String orgRefName;
 }

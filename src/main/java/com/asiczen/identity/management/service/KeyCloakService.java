@@ -2,7 +2,6 @@ package com.asiczen.identity.management.service;
 
 import org.springframework.stereotype.Service;
 
-import com.asiczen.identity.management.dto.UserRepresentation;
 import com.asiczen.identity.management.request.UserCredentials;
 import com.asiczen.identity.management.request.UserDto;
 import com.asiczen.identity.management.response.CurrentUserResponse;
