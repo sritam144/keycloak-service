@@ -1,7 +1,11 @@
 package com.asiczen.identity.management.service.impl;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,16 +21,20 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpClientErrorException.Unauthorized;
 import org.springframework.web.client.RestTemplate;
 
+import com.asiczen.identity.management.dto.Credentials;
+import com.asiczen.identity.management.dto.UserCustomDetails;
 import com.asiczen.identity.management.dto.UserInfo;
 import com.asiczen.identity.management.dto.UserRepresentation;
 import com.asiczen.identity.management.exception.AccessisDeniedException;
 import com.asiczen.identity.management.exception.InternalServerError;
 import com.asiczen.identity.management.exception.ResourceAlreadyExistException;
+import com.asiczen.identity.management.exception.ResourceNotFoundException;
 import com.asiczen.identity.management.request.UserCredentials;
 import com.asiczen.identity.management.request.UserDto;
 import com.asiczen.identity.management.response.CurrentUserResponse;
 import com.asiczen.identity.management.response.LoginResponse;
 import com.asiczen.identity.management.response.RefreshTokenResponse;
+import com.asiczen.identity.management.response.UserListResponse;
 import com.asiczen.identity.management.service.KeyCloakService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -87,20 +95,8 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 		try {
 
 			response = restTemplate.postForEntity(TOKENURL, request, LoginResponse.class);
-
-			log.info("--------> {}", response.getBody());
-
-			LoginResponse loginResponse = new LoginResponse();
-
-			loginResponse.setAccess_token(response.getBody().getAccess_token());
-			loginResponse.setRefresh_token(response.getBody().getRefresh_token());
-			loginResponse.setRefresh_expires_in(response.getBody().getRefresh_expires_in());
-			loginResponse.setExpires_in(response.getBody().getExpires_in());
-			loginResponse.setOrgRefName(getUserwithAttributes(response.getBody().getAccess_token()).getOrgRefName());
-
-			/* Test Code */
-
-			return loginResponse;
+			log.trace("--------> {}", response.getBody());
+			return response.getBody();
 
 		} catch (Unauthorized ep) {
 			log.error("Username or password validation failed.{}" + ep.getLocalizedMessage());
@@ -130,18 +126,11 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 
 			ResponseEntity<RefreshTokenResponse> response = restTemplate.postForEntity(TOKENURL, request,
 					RefreshTokenResponse.class);
-			log.info("Refresh is" + response.getBody().getRefresh_token());
-			log.info("Access token" + response.getBody().getAccess_token());
-			log.info("Response body --> {}", response.getBody().toString());
+			log.trace("Refresh is" + response.getBody().getRefresh_token());
+			log.trace("Access token" + response.getBody().getAccess_token());
+			log.trace("Response body --> {}", response.getBody().toString());
 
-			RefreshTokenResponse tokenResponse = new RefreshTokenResponse();
-
-			tokenResponse.setAccess_token(response.getBody().getAccess_token());
-			tokenResponse.setExpires_in(response.getBody().getExpires_in());
-			tokenResponse.setRefresh_token(response.getBody().getRefresh_token());
-			tokenResponse.setRefresh_expires_in(response.getBody().getRefresh_expires_in());
-
-			return tokenResponse;
+			return response.getBody();
 
 		} catch (Unauthorized ep) {
 			log.error("Username or password validation failed.{}" + ep.getLocalizedMessage());
@@ -174,6 +163,20 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 		requestBody.put("firstName", userDTO.getFirstName());
 		requestBody.put("lastName", userDTO.getLastName());
 		requestBody.put("enabled", true);
+
+		/* Set Attributes */
+		Map<String, String> attributes = new HashMap<>();
+		attributes.put("contact", userDTO.getContactNumber());
+		attributes.put("orgRefName", userDTO.getOrgRefName());
+
+		requestBody.put("attributes", attributes);
+
+		/* Set password */
+		List<Credentials> credentials = new ArrayList<>();
+		Credentials data = new Credentials("password", "password", false);
+		credentials.add(data);
+
+		requestBody.put("credentials", credentials);
 
 		HttpEntity<Object> request = new HttpEntity<Object>(requestBody, headers);
 
@@ -243,49 +246,6 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 
 	}
 
-//	@Override
-//	public void resetPassword(String newPassword, String userId) {
-//
-//		UsersResource userResource = getKeycloakUserResource();
-//
-//		CredentialRepresentation passwordCred = new CredentialRepresentation();
-//		passwordCred.setTemporary(false);
-//		passwordCred.setType(CredentialRepresentation.PASSWORD);
-//		passwordCred.setValue(newPassword.toString().trim());
-//
-//		// Set password credential
-//		try {
-//			userResource.get(userId).resetPassword(passwordCred);
-//		} catch (Exception ep) {
-//			log.error("Error in reseting password. Please try again {}" + ep.getLocalizedMessage());
-//		}
-//
-//	}
-
-//	public UsersResource getKeycloakUserResource() {
-//
-//		Keycloak kc = KeycloakBuilder.builder().serverUrl(AUTHURL).realm(REALM).username("sanjeet215@gmail.com")
-//				.password("password").clientId("CLIENTID")
-//				.resteasyClient(new ResteasyClientBuilder().connectionPoolSize(10).build()).build();
-//
-//		RealmResource realmResource = kc.realm(REALM);
-//		UsersResource userRessource = realmResource.users();
-//
-//		return userRessource;
-//	}
-
-//	private RealmResource getRealmResource() {
-//
-//		Keycloak kc = KeycloakBuilder.builder().serverUrl(AUTHURL).realm(REALM).username("sanjeet215@gmail.com")
-//				.password("password").clientId("CLIENTID")
-//				.resteasyClient(new ResteasyClientBuilder().connectionPoolSize(10).build()).build();
-//
-//		RealmResource realmResource = kc.realm(REALM);
-//
-//		return realmResource;
-//
-//	}
-
 	/* This method returns current user information . Based on the supplied token */
 
 	@Override
@@ -310,7 +270,7 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 
 		} catch (HttpClientErrorException.Forbidden ep) {
 			log.error("Resource is forbidden");
-			throw new AccessisDeniedException("Access is denied");
+			throw new AccessisDeniedException("Access is Forbidden");
 		} catch (HttpClientErrorException.Unauthorized ep) {
 			throw new AccessisDeniedException("Access is denied");
 		} catch (Exception ep) {
@@ -332,6 +292,7 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 
 	@Override
 	public CurrentUserResponse getUserwithAttributes(String token) {
+
 		CurrentUserResponse response = this.getCurrentUserInfo(token);
 
 		HttpHeaders headers = new HttpHeaders();
@@ -346,6 +307,174 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 		response.setOrgRefName(userinfo.getBody().getAttributes().getOrgRefName().get(0));
 
 		return response;
+	}
+
+	@Override
+	public boolean deleteUser(String token, String uid) {
+
+		boolean status = false;
+
+		CurrentUserResponse response = this.getUserwithAttributes(token);
+
+		// response.getOrgRefName()
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.add("Authorization", token);
+		HttpEntity<Object> request = new HttpEntity<>(headers);
+
+		try {
+
+			UserListResponse userdtl = this.getUserByUseId(uid, token);
+
+			if (userdtl.getAttributes() != null) {
+				if (!response.getOrgRefName().equalsIgnoreCase(userdtl.getAttributes().getOrgRefName().get(0))) {
+					throw new AccessisDeniedException("You don't have access to delete a user");
+				}
+			}
+
+			// restTemplate.exchange(url, method, requestEntity, responseType)
+			ResponseEntity<?> deleteResponse = restTemplate.exchange(USERADDURL + "/" + uid, HttpMethod.DELETE, request,
+					Object.class);
+			if (deleteResponse.getStatusCodeValue() == 204) {
+				log.info("User was deleted successfully.");
+				status = true;
+			}
+
+		} catch (Unauthorized ex) {
+			log.error("Unauthorized access prohibited" + ex.getLocalizedMessage());
+			throw new AccessisDeniedException(ex.getLocalizedMessage());
+		} catch (Exception ep) {
+			log.error("There is some error whiel getting the user list");
+			throw new ResourceNotFoundException("No users registered for the organization yet");
+		}
+
+		return status;
+	}
+
+	// Delete any user -- should be for super admin profile.
+	@Override
+	public void deleteAnyUser(String token, String uuid) {
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.add("Authorization", token);
+		HttpEntity<Object> request = new HttpEntity<>(headers);
+		try {
+			ResponseEntity<?> deleteResponse = restTemplate.exchange(USERADDURL + "/" + uuid, HttpMethod.DELETE,
+					request, Object.class);
+			if (deleteResponse.getStatusCodeValue() == 204) {
+				log.info("User was deleted successfully.");
+			}
+
+		} catch (Unauthorized ex) {
+			log.error("Unauthorized access prohibited" + ex.getLocalizedMessage());
+			throw new AccessisDeniedException(ex.getLocalizedMessage());
+		} catch (Exception ep) {
+			log.error("There is some error whiel getting the user list");
+			throw new ResourceNotFoundException("No users registered for the organization yet");
+		}
+
+	}
+
+	// Get Organization Specific users
+	@Override
+	public List<UserListResponse> getAllUsersOrgSpecific(String token) {
+
+		CurrentUserResponse response = this.getUserwithAttributes(token);
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.add("Authorization", token);
+		HttpEntity<Object> request = new HttpEntity<>(headers);
+
+		if (response.getOrgRefName() != null) {
+
+			try {
+
+				ResponseEntity<UserListResponse[]> userList = restTemplate.exchange(USERADDURL, HttpMethod.GET, request,
+						UserListResponse[].class);
+				if (userList.getStatusCodeValue() == 200) {
+					return Arrays.stream(userList.getBody()).filter(item -> (item.getAttributes() != null))
+							.filter(item -> item.getAttributes().getOrgRefName().get(0)
+									.equalsIgnoreCase(response.getOrgRefName()))
+							.collect(Collectors.toList());
+
+				} else {
+					throw new ResourceNotFoundException("No users registered for the organization yet");
+				}
+
+			} catch (Unauthorized ex) {
+				log.error("Unauthorized access prohibited" + ex.getLocalizedMessage());
+				throw new AccessisDeniedException(ex.getLocalizedMessage());
+			} catch (Exception ep) {
+				log.error("There is some error whiel getting the user list");
+				throw new ResourceNotFoundException("No users registered for the organization yet");
+			}
+
+		} else {
+			throw new AccessisDeniedException("user not registered/access is denied");
+		}
+
+	}
+
+	// This will be used by super admin profile to get all users registered.
+	@Override
+	public List<UserListResponse> getAllUsers(String token) {
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.add("Authorization", token);
+		HttpEntity<Object> request = new HttpEntity<>(headers);
+
+		try {
+
+			ResponseEntity<UserListResponse[]> userList = restTemplate.exchange(USERADDURL, HttpMethod.GET, request,
+					UserListResponse[].class);
+			if (userList.getStatusCodeValue() == 200) {
+				return Arrays.stream(userList.getBody()).collect(Collectors.toList());
+			} else {
+				throw new ResourceNotFoundException("No users registered for the organization yet");
+			}
+
+		} catch (Unauthorized ex) {
+			log.error("Unauthorized access prohibited" + ex.getLocalizedMessage());
+			throw new AccessisDeniedException(ex.getLocalizedMessage());
+		} catch (Exception ep) {
+			log.error("There is some error whiel getting the user list" + ep.getLocalizedMessage());
+			throw new ResourceNotFoundException("No users registered for the organization yet");
+		}
+
+	}
+
+	@Override
+	public UserListResponse getUserByUseId(String uuid, String token) {
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.add("Authorization", token);
+		HttpEntity<Object> request = new HttpEntity<>(headers);
+
+		try {
+
+			ResponseEntity<UserListResponse> response = restTemplate.exchange(USERADDURL, HttpMethod.GET, request,
+					UserListResponse.class);
+
+			if (response.getStatusCodeValue() == 200) {
+				return response.getBody();
+			} else {
+				log.error("There is some error whiel getting the user list. Response code : {}",
+						response.getStatusCodeValue());
+			}
+
+		} catch (Unauthorized ex) {
+			log.error("Unauthorized access prohibited" + ex.getLocalizedMessage());
+			throw new AccessisDeniedException(ex.getLocalizedMessage());
+		} catch (Exception ep) {
+			log.error("There is some error whiel getting the user list" + ep.getLocalizedMessage());
+			throw new ResourceNotFoundException("No users registered for the organization yet");
+		}
+		return null;
 	}
 
 }

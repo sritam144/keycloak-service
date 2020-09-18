@@ -1,5 +1,7 @@
 package com.asiczen.identity.management.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.asiczen.identity.management.request.UserCredentials;
@@ -7,6 +9,7 @@ import com.asiczen.identity.management.request.UserDto;
 import com.asiczen.identity.management.response.CurrentUserResponse;
 import com.asiczen.identity.management.response.LoginResponse;
 import com.asiczen.identity.management.response.RefreshTokenResponse;
+import com.asiczen.identity.management.response.UserListResponse;
 
 @Service
 public interface KeyCloakService {
@@ -26,5 +29,15 @@ public interface KeyCloakService {
 	public CurrentUserResponse getCurrentUserInfo(String token);
 
 	public CurrentUserResponse getUserwithAttributes(String token);
+
+	public boolean deleteUser(String token, String uuid);
+
+	public void deleteAnyUser(String token, String uuid);
+
+	public List<UserListResponse> getAllUsersOrgSpecific(String token);
+
+	public List<UserListResponse> getAllUsers(String token);
+
+	public UserListResponse getUserByUseId(String uuid, String token);
 
 }

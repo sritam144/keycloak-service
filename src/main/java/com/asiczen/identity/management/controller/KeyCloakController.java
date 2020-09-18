@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -60,7 +61,6 @@ public class KeyCloakController {
 		return new ResponseEntity<>(keyClockService.createUserInKeyCloak(userDto, Authorization), HttpStatus.CREATED);
 	}
 
-
 	@GetMapping(value = "/currentuser")
 	public ResponseEntity<?> getCurrentUser(@RequestHeader String Authorization) {
 		return new ResponseEntity<>(keyClockService.getUserwithAttributes(Authorization), HttpStatus.OK);
@@ -88,4 +88,16 @@ public class KeyCloakController {
 
 	}
 
+	// @DeleteMapping(value = "/users")
+
+	@GetMapping(value = "/users")
+	public ResponseEntity<?> getAllUsersfromKeyCloak(@RequestHeader String Authorization) {
+		return new ResponseEntity<>(keyClockService.getAllUsersOrgSpecific(Authorization), HttpStatus.OK);
+	}
+
+	// this is for super admin profile
+	@GetMapping(value = "/usersall")
+	public ResponseEntity<?> getAllUsersforRealm(@RequestHeader String Authorization) {
+		return new ResponseEntity<>(keyClockService.getAllUsers(Authorization), HttpStatus.OK);
+	}
 }

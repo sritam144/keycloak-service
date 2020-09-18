@@ -9,5 +9,4 @@ public class LoginResponse {
 	private String refresh_token;
 	private int expires_in;
 	private int refresh_expires_in;
-	private String orgRefName;
 }

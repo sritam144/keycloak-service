@@ -24,4 +24,10 @@ public class UserDto implements Serializable {
 	@NotEmpty(message = "Last Name is required/Can't be blank")
 	@Size(min = 1, max = 16, message = "Last Name should be between 1 to 16 characters")
 	private String lastName;
+
+	@NotEmpty(message = "OrgRefName is mandatory/can't be blank")
+	private String orgRefName;
+
+	@NotEmpty(message = "contactNumber is mandatory/Can't be blank")
+	private String contactNumber;
 }
