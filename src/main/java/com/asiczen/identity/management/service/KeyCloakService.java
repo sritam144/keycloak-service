@@ -22,7 +22,7 @@ public interface KeyCloakService {
 
 	public void logoutUser(String userId);
 
-	public void resetPassword(String newPassword, String userId);
+	public void resetPassword(String token, String newPassword, String userId);
 
 	// public void test(Principal principal);
 

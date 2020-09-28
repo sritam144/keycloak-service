@@ -1,10 +1,7 @@
 package com.asiczen.identity.management.controller;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
-import org.keycloak.KeycloakPrincipal;
-import org.keycloak.representations.AccessToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +14,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.asiczen.identity.management.request.UserCredentials;
 import com.asiczen.identity.management.request.UserDto;
@@ -76,19 +71,17 @@ public class KeyCloakController {
 	}
 
 	@GetMapping(value = "/update/password")
-	public ResponseEntity<?> updatePassword(HttpServletRequest request, String newPassword) {
-
-		request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-		AccessToken token = ((KeycloakPrincipal<?>) request.getUserPrincipal()).getKeycloakSecurityContext().getToken();
-		String userId = token.getSubject();
-
-		keyClockService.resetPassword(newPassword, userId);
-
-		return new ResponseEntity<>("Hi!, your password has been successfully updated!", HttpStatus.OK);
+	public ResponseEntity<?> updatePassword(@RequestHeader String Authorization, String newPassword, String uuid) {
+		keyClockService.resetPassword(Authorization, newPassword, uuid);
+		return new ResponseEntity<>("Your password has been successfully updated!", HttpStatus.OK);
 
 	}
 
-	// @DeleteMapping(value = "/users")
+	@DeleteMapping(value = "/users") // SuperAdmin profile
+	public ResponseEntity<?> deleteUser(@RequestHeader String Authorization, @RequestParam String uuid) {
+		keyClockService.deleteAnyUser(Authorization, uuid);
+		return new ResponseEntity<>("User deleted successfully", HttpStatus.NO_CONTENT);
+	}
 
 	@GetMapping(value = "/users")
 	public ResponseEntity<?> getAllUsersfromKeyCloak(@RequestHeader String Authorization) {
@@ -100,4 +93,5 @@ public class KeyCloakController {
 	public ResponseEntity<?> getAllUsersforRealm(@RequestHeader String Authorization) {
 		return new ResponseEntity<>(keyClockService.getAllUsers(Authorization), HttpStatus.OK);
 	}
+
 }

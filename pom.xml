@@ -19,6 +19,8 @@
 		<java.version>11</java.version>
 		<!-- <spring-cloud.version>Hoxton.SR6</spring-cloud.version> -->
 		<keycloak.version>10.0.2</keycloak.version>
+		<swagger.version>2.7.0</swagger.version>
+		<!-- <commons.version>3.10</commons.version> -->
 		<spring-cloud.version>Hoxton.SR5</spring-cloud.version>
 	</properties>
 
@@ -61,18 +63,22 @@
 		<dependency>
 			<groupId>io.springfox</groupId>
 			<artifactId>springfox-swagger2</artifactId>
-			<version>2.7.0</version>
+			<version>${swagger.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.springfox</groupId>
 			<artifactId>springfox-swagger-ui</artifactId>
-			<version>2.7.0</version>
+			<version>${swagger.version}</version>
 		</dependency>
-
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+<!-- 			<version>${commons.version}</version> -->
+		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.12</version>
+			<!-- <version>1.18.12</version> -->
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

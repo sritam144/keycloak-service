@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -72,6 +73,8 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 
 	@Autowired
 	RestTemplate restTemplate;
+
+	private static final String charSequence = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 	@Override
 	public LoginResponse getToken(UserCredentials userCredentials) {
@@ -173,7 +176,9 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 
 		/* Set password */
 		List<Credentials> credentials = new ArrayList<>();
-		Credentials data = new Credentials("password", "password", false);
+
+		String password = RandomStringUtils.random(8, charSequence);
+		Credentials data = new Credentials("password", password, false);
 		credentials.add(data);
 
 		requestBody.put("credentials", credentials);
@@ -183,10 +188,10 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 		try {
 
 			ResponseEntity<String> response = restTemplate.postForEntity(USERADDURL, request, String.class);
-			log.debug(response.getStatusCode().toString());
-			log.debug(response.getHeaders().toString());
-			log.debug(response.getBody());
-			log.debug(response.toString());
+			log.trace(response.getStatusCode().toString());
+			log.trace(response.getHeaders().toString());
+			log.trace(response.getBody());
+			log.trace(response.toString());
 
 			if (response.getStatusCodeValue() == 201) {
 				returnResponse = "user created successfully";
@@ -286,8 +291,39 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 	 * Set up a new password for the user. password reset
 	 */
 	@Override
-	public void resetPassword(String newPassword, String userId) {
-		// PASSRESET
+	public void resetPassword(String token, String newPassword, String userId) {
+
+		String password = RandomStringUtils.random(8, charSequence);
+		Credentials newCred = new Credentials("password", password, false);
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.add("Authorization", token);
+
+		Map<String, Object> requestBody = new HashMap<String, Object>();
+		requestBody.put("type", "password");
+		requestBody.put("value", newCred);
+		requestBody.put("temporary", false);
+
+		Map<String, String> params = new HashMap<String, String>();
+		params.put("id", userId);
+
+		HttpEntity<Object> request = new HttpEntity<Object>(requestBody, headers);
+
+		try {
+			ResponseEntity<?> responseobj = restTemplate.exchange(PASSRESET, HttpMethod.PUT, request, Object.class,
+					params);
+
+			if (responseobj.getStatusCodeValue() != 204) {
+				log.error("Error while resetting the password for user ", responseobj.getStatusCodeValue());
+			} else {
+				log.info("password reset is successful");
+			}
+
+		} catch (Exception ep) {
+			log.error("Error while logout. {} ", ep.getMessage());
+		}
+
 	}
 
 	@Override
@@ -457,8 +493,7 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 
 		try {
 
-			ResponseEntity<UserListResponse> response = restTemplate.exchange(USERADDURL, HttpMethod.GET, request,
-					UserListResponse.class);
+			ResponseEntity<UserListResponse> response = restTemplate.exchange(USERADDURL, HttpMethod.GET, request,UserListResponse.class);
 
 			if (response.getStatusCodeValue() == 200) {
 				return response.getBody();
