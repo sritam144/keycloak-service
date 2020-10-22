@@ -91,7 +91,7 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 		map.add("password", userCredentials.getPassword());
 		map.add("client_secret", SECRETKEY);
 
-		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<MultiValueMap<String, String>>(map, headers);
+		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
 		ResponseEntity<LoginResponse> response = null;
 
