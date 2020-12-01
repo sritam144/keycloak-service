@@ -6,7 +6,7 @@ spring:
     name: keycloak-services  
     
   datasource:
-    url: jdbc:mysql://localhost:3306/fleetdb
+    url: jdbc:mysql://localhost:3306/fleetdb3
     username: root
     password: password
     dbcp2:

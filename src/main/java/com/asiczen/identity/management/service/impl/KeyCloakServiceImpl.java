@@ -23,7 +23,6 @@ import org.springframework.web.client.HttpClientErrorException.Unauthorized;
 import org.springframework.web.client.RestTemplate;
 
 import com.asiczen.identity.management.dto.Credentials;
-import com.asiczen.identity.management.dto.UserCustomDetails;
 import com.asiczen.identity.management.dto.UserInfo;
 import com.asiczen.identity.management.dto.UserRepresentation;
 import com.asiczen.identity.management.exception.AccessisDeniedException;
@@ -84,7 +83,7 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 
 		String username = userCredentials.getUsername();
 
-		MultiValueMap<String, String> map = new LinkedMultiValueMap<String, String>();
+		MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
 		map.add("grant_type", "password");
 		map.add("client_id", CLIENTID);
 		map.add("username", username);
@@ -117,13 +116,13 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-		MultiValueMap<String, String> map = new LinkedMultiValueMap<String, String>();
+		MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
 		map.set("grant_type", "refresh_token");
 		map.set("client_id", CLIENTID);
 		map.set("refresh_token", refreshToken);
 		map.set("client_secret", SECRETKEY);
 
-		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<MultiValueMap<String, String>>(map, headers);
+		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
 		try {
 
@@ -157,7 +156,7 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 		headers.add("Authorization", token);
 		log.info(token);
 
-		Map<String, Object> requestBody = new HashMap<String, Object>();
+		Map<String, Object> requestBody = new HashMap<>();
 
 		log.info(userDTO.toString());
 
@@ -183,7 +182,7 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 
 		requestBody.put("credentials", credentials);
 
-		HttpEntity<Object> request = new HttpEntity<Object>(requestBody, headers);
+		HttpEntity<Object> request = new HttpEntity<>(requestBody, headers);
 
 		try {
 
@@ -233,7 +232,7 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 		headers.add("Authorization", token);
 		HttpEntity<Object> request = new HttpEntity<>(headers);
 
-		Map<String, String> params = new HashMap<String, String>();
+		Map<String, String> params = new HashMap<>();
 		params.put("id", currentUserid);
 
 		try {
@@ -300,15 +299,15 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		headers.add("Authorization", token);
 
-		Map<String, Object> requestBody = new HashMap<String, Object>();
+		Map<String, Object> requestBody = new HashMap<>();
 		requestBody.put("type", "password");
 		requestBody.put("value", newCred);
 		requestBody.put("temporary", false);
 
-		Map<String, String> params = new HashMap<String, String>();
+		Map<String, String> params = new HashMap<>();
 		params.put("id", userId);
 
-		HttpEntity<Object> request = new HttpEntity<Object>(requestBody, headers);
+		HttpEntity<Object> request = new HttpEntity<>(requestBody, headers);
 
 		try {
 			ResponseEntity<?> responseobj = restTemplate.exchange(PASSRESET, HttpMethod.PUT, request, Object.class,
