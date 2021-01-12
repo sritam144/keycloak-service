@@ -46,8 +46,7 @@ public class KeyCloakController {
 
 	@PostMapping(value = "/createuser")
 	@PreAuthorize("hasRole('ROLE_ADMIN')")
-	public ResponseEntity<?> createUserinKeyCloak(@Valid @RequestBody UserDto userDto,
-			@RequestHeader String Authorization) {
+	public ResponseEntity<?> createUserinKeyCloak(@Valid @RequestBody UserDto userDto,@RequestHeader String Authorization) {
 
 		log.trace("Token is --->" + Authorization);
 		log.trace("Request object --> {}", userDto.toString());

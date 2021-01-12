@@ -180,6 +180,8 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 		Credentials data = new Credentials("password", password, false);
 		credentials.add(data);
 
+		// Need to email user credentials to newly created user.
+
 		requestBody.put("credentials", credentials);
 
 		HttpEntity<Object> request = new HttpEntity<>(requestBody, headers);
