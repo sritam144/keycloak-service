@@ -8,5 +8,5 @@ import java.util.Map;
 
 @Service
 public interface MailSenderService {
-	public void sendEmail(String request, String to);
+	public void sendEmail(String password, String to);
 }

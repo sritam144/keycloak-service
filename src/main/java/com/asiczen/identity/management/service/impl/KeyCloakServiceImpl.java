@@ -44,479 +44,493 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class KeyCloakServiceImpl implements KeyCloakService {
 
-	@Value("${keycloak.credentials.secret}")
-	private String SECRETKEY;
+    @Value("${keycloak.credentials.secret}")
+    private String SECRETKEY;
 
-	@Value("${keycloak.resource}")
-	private String CLIENTID;
+    @Value("${keycloak.resource}")
+    private String CLIENTID;
 
-	@Value("${keycloak.auth-server-url}")
-	private String AUTHURL;
+    @Value("${keycloak.auth-server-url}")
+    private String AUTHURL;
 
-	@Value("${keycloak.realm}")
-	private String REALM;
+    @Value("${keycloak.realm}")
+    private String REALM;
 
-	@Value("${app.url.token}")
-	private String TOKENURL;
+    @Value("${app.url.token}")
+    private String TOKENURL;
 
-	@Value("${app.url.user}")
-	private String USERADDURL;
+    @Value("${app.url.user}")
+    private String USERADDURL;
 
-	@Value("${app.url.userinfo}")
-	private String USERINFO;
+    @Value("${app.url.userinfo}")
+    private String USERINFO;
 
-	@Value("${app.url.logout}")
-	private String LOGOUTURL;
+    @Value("${app.url.logout}")
+    private String LOGOUTURL;
 
-	@Value("${app.url.passreset}")
-	private String PASSRESET;
+    @Value("${app.url.passreset}")
+    private String PASSRESET;
 
-	@Autowired
-	RestTemplate restTemplate;
+    @Autowired
+    RestTemplate restTemplate;
 
-	@Autowired
-	MailSenderService mailSenderService;
+    @Autowired
+    MailSenderService mailSenderService;
 
-	private static final String charSequence = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    private static final String charSequence = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-	@Override
-	public LoginResponse getToken(UserCredentials userCredentials) {
+    @Override
+    public LoginResponse getToken(UserCredentials userCredentials) {
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-		String username = userCredentials.getUsername();
+        String username = userCredentials.getUsername();
 
-		MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-		map.add("grant_type", "password");
-		map.add("client_id", CLIENTID);
-		map.add("username", username);
-		map.add("password", userCredentials.getPassword());
-		map.add("client_secret", SECRETKEY);
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+        map.add("grant_type", "password");
+        map.add("client_id", CLIENTID);
+        map.add("username", username);
+        map.add("password", userCredentials.getPassword());
+        map.add("client_secret", SECRETKEY);
 
-		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
-		ResponseEntity<LoginResponse> response = null;
+        ResponseEntity<LoginResponse> response = null;
 
-		try {
+        try {
 
-			response = restTemplate.postForEntity(TOKENURL, request, LoginResponse.class);
-			log.trace("--------> {}", response.getBody());
-			return response.getBody();
+            response = restTemplate.postForEntity(TOKENURL, request, LoginResponse.class);
+            log.trace("--------> {}", response.getBody());
+            return response.getBody();
 
-		} catch (Unauthorized ep) {
-			log.error("Username or password validation failed.{}" + ep.getLocalizedMessage());
-			throw new AccessisDeniedException("invalid username or password");
-		} catch (Exception ep) {
-			log.error("Some internal server error {}", ep.getLocalizedMessage());
-			throw new AccessisDeniedException("Some internal server error occured.-- false one");
-		}
+        } catch (Unauthorized ep) {
+            log.error("Username or password validation failed.{}" + ep.getLocalizedMessage());
+            throw new AccessisDeniedException("invalid username or password");
+        } catch (Exception ep) {
+            log.error("Some internal server error {}", ep.getLocalizedMessage());
+            throw new AccessisDeniedException("Some internal server error occured.-- false one");
+        }
 
-	}
+    }
 
-	@Override
-	public RefreshTokenResponse getByRefreshToken(String refreshToken) {
+    @Override
+    public RefreshTokenResponse getByRefreshToken(String refreshToken) {
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-		MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-		map.set("grant_type", "refresh_token");
-		map.set("client_id", CLIENTID);
-		map.set("refresh_token", refreshToken);
-		map.set("client_secret", SECRETKEY);
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+        map.set("grant_type", "refresh_token");
+        map.set("client_id", CLIENTID);
+        map.set("refresh_token", refreshToken);
+        map.set("client_secret", SECRETKEY);
 
-		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
-		try {
+        try {
 
-			ResponseEntity<RefreshTokenResponse> response = restTemplate.postForEntity(TOKENURL, request,
-					RefreshTokenResponse.class);
-			log.trace("Refresh is" + response.getBody().getRefresh_token());
-			log.trace("Access token" + response.getBody().getAccess_token());
-			log.trace("Response body --> {}", response.getBody().toString());
+            ResponseEntity<RefreshTokenResponse> response = restTemplate.postForEntity(TOKENURL, request,
+                    RefreshTokenResponse.class);
+            log.trace("Refresh is" + response.getBody().getRefresh_token());
+            log.trace("Access token" + response.getBody().getAccess_token());
+            log.trace("Response body --> {}", response.getBody().toString());
 
-			return response.getBody();
+            return response.getBody();
 
-		} catch (Unauthorized ep) {
-			log.error("Username or password validation failed.{}" + ep.getLocalizedMessage());
-			throw new AccessisDeniedException("invalid username or password");
-		} catch (Exception ep) {
-			log.error("Some internal server error {}", ep.getLocalizedMessage());
-			throw new AccessisDeniedException("Some internal server error occured. -- false");
-		}
+        } catch (Unauthorized ep) {
+            log.error("Username or password validation failed.{}" + ep.getLocalizedMessage());
+            throw new AccessisDeniedException("invalid username or password");
+        } catch (Exception ep) {
+            log.error("Some internal server error {}", ep.getLocalizedMessage());
+            throw new AccessisDeniedException("Some internal server error occured. -- false");
+        }
 
-	}
+    }
 
-	@Override
-	public String createUserInKeyCloak(UserDto userDTO, String token) {
+    @Override
+    public String createUserInKeyCloak(UserDto userDTO, String token) {
 
-		String returnResponse = null;
+        String returnResponse = null;
 
-		log.trace("Controller came here");
+        log.trace("Controller came here");
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.add("Authorization", token);
-		log.info(token);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", token);
+        log.info(token);
 
-		Map<String, Object> requestBody = new HashMap<>();
+        Map<String, Object> requestBody = new HashMap<>();
 
-		log.info(userDTO.toString());
+        log.info(userDTO.toString());
 
-		requestBody.put("email", userDTO.getUserName());
-		requestBody.put("username", userDTO.getUserName());
-		requestBody.put("firstName", userDTO.getFirstName());
-		requestBody.put("lastName", userDTO.getLastName());
-		requestBody.put("enabled", true);
+        requestBody.put("email", userDTO.getUserName());
+        requestBody.put("username", userDTO.getUserName());
+        requestBody.put("firstName", userDTO.getFirstName());
+        requestBody.put("lastName", userDTO.getLastName());
+        requestBody.put("enabled", true);
 
-		/* Set Attributes */
-		Map<String, String> attributes = new HashMap<>();
-		attributes.put("contact", userDTO.getContactNumber());
-		attributes.put("orgRefName", userDTO.getOrgRefName());
+        /* Set Attributes */
+        Map<String, String> attributes = new HashMap<>();
+        attributes.put("contact", userDTO.getContactNumber());
+        attributes.put("orgRefName", userDTO.getOrgRefName());
 
-		requestBody.put("attributes", attributes);
+        requestBody.put("attributes", attributes);
 
-		/* Set password */
-		List<Credentials> credentials = new ArrayList<>();
+        /* Set password */
+        List<Credentials> credentials = new ArrayList<>();
 
-		String password = RandomStringUtils.random(8, charSequence);
-		Credentials data = new Credentials("password", password, false);
-		credentials.add(data);
+        String password = RandomStringUtils.random(8, charSequence);
+        Credentials data = new Credentials("password", password, false);
+        credentials.add(data);
 
 
-		// Need to email user credentials to newly created user.
+        // Need to email user credentials to newly created user.
 
-		requestBody.put("credentials", credentials);
+        requestBody.put("credentials", credentials);
 
-		HttpEntity<Object> request = new HttpEntity<>(requestBody, headers);
+        HttpEntity<Object> request = new HttpEntity<>(requestBody, headers);
 
-		try {
+        try {
 
-			ResponseEntity<String> response = restTemplate.postForEntity(USERADDURL, request, String.class);
-			log.trace(response.getStatusCode().toString());
-			log.trace(response.getHeaders().toString());
-			log.trace(response.getBody());
-			log.trace(response.toString());
+            ResponseEntity<String> response = restTemplate.postForEntity(USERADDURL, request, String.class);
+            log.trace(response.getStatusCode().toString());
+            log.trace(response.getHeaders().toString());
+            log.trace(response.getBody());
+            log.trace(response.toString());
 
-			if (response.getStatusCodeValue() == 201) {
-				mailSenderService.sendEmail(password, userDTO.getUserName());
-				returnResponse = "user created successfully";
-			} else {
-				returnResponse = "some issue while creating user";
-			}
+            if (response.getStatusCodeValue() == 201) {
+                try {
+                    mailSenderService.sendEmail(password, userDTO.getUserName());
+                    returnResponse = "user created successfully , Ask suer to check his email id for credentials.";
+                } catch (Exception exception) {
+                    log.error("Error while sending email/sms. Please contact system admin.");
+                    returnResponse = "user created successfully but there is problem while sending credentials to user.";
+                }
 
-			return returnResponse;
+            } else {
+                returnResponse = "some issue while creating user , please try again in some time. If the issue persists please contact system admin.";
+            }
 
-		} catch (HttpClientErrorException.Conflict cep) {
-			log.error("User already present in the system with {} user name", userDTO.getUserName());
-			log.error(cep.getMessage());
-			throw new ResourceAlreadyExistException(
-					"user name already registered in system {}" + userDTO.getUserName());
+            return returnResponse;
 
-		} catch (HttpClientErrorException.Forbidden ep) {
-			log.error("Resource is forbidden for user {}", userDTO.getUserName());
-			throw new AccessisDeniedException("Access is denied");
-		} catch (HttpClientErrorException.Unauthorized ep) {
-			throw new AccessisDeniedException("Access is denied");
-		} catch (Exception ep) {
-			throw new InternalServerError(ep.getLocalizedMessage());
-		}
+        } catch (HttpClientErrorException.Conflict cep) {
+            log.error("User already present in the system with {} user name", userDTO.getUserName());
+            log.error(cep.getMessage());
+            throw new ResourceAlreadyExistException(
+                    "user name already registered in system {}" + userDTO.getUserName());
 
-	}
+        } catch (HttpClientErrorException.Forbidden ep) {
+            log.error("Resource is forbidden for user {}", userDTO.getUserName());
+            throw new AccessisDeniedException("Access is denied");
+        } catch (HttpClientErrorException.Unauthorized ep) {
+            throw new AccessisDeniedException("Access is denied");
+        } catch (Exception ep) {
+            throw new InternalServerError(ep.getLocalizedMessage());
+        }
 
-	@Override
-	public void logoutUser(String token) {
+    }
 
-		CurrentUserResponse response = getCurrentUserInfo(token);
-		String currentUserid = response.getUuid();
+    @Override
+    public void logoutUser(String token) {
 
-		log.trace("Current user: {}", response.getUuid());
-		log.trace("Current email id {}", response.getEmailid());
-		log.trace("Given user name {}", response.getGiven_name());
+        CurrentUserResponse response = getCurrentUserInfo(token);
+        String currentUserid = response.getUuid();
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.add("Authorization", token);
-		HttpEntity<Object> request = new HttpEntity<>(headers);
+        log.trace("Current user: {}", response.getUuid());
+        log.trace("Current email id {}", response.getEmailid());
+        log.trace("Given user name {}", response.getGiven_name());
 
-		Map<String, String> params = new HashMap<>();
-		params.put("id", currentUserid);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", token);
+        HttpEntity<Object> request = new HttpEntity<>(headers);
 
-		try {
-			ResponseEntity<?> responseobj = restTemplate.postForEntity(LOGOUTURL, request, Object.class, params);
+        Map<String, String> params = new HashMap<>();
+        params.put("id", currentUserid);
 
-			if (responseobj.getStatusCodeValue() != 204) {
-				log.error("Error while occured while terminating the session {} ", responseobj.getStatusCodeValue());
-			} else {
-				log.info("Successfully logged out of the system");
-			}
+        try {
+            ResponseEntity<?> responseobj = restTemplate.postForEntity(LOGOUTURL, request, Object.class, params);
 
-		} catch (Exception ep) {
-			log.error("Error while logout. {} ", ep.getMessage());
-		}
+            if (responseobj.getStatusCodeValue() != 204) {
+                log.error("Error while occured while terminating the session {} ", responseobj.getStatusCodeValue());
+            } else {
+                log.info("Successfully logged out of the system");
+            }
 
-	}
+        } catch (Exception ep) {
+            log.error("Error while logout. {} ", ep.getMessage());
+        }
 
-	/* This method returns current user information . Based on the supplied token */
+    }
 
-	@Override
-	public CurrentUserResponse getCurrentUserInfo(String token) {
+    /* This method returns current user information . Based on the supplied token */
 
-		CurrentUserResponse currentuserinfo = new CurrentUserResponse();
+    @Override
+    public CurrentUserResponse getCurrentUserInfo(String token) {
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.add("Authorization", token);
-		HttpEntity<Object> request = new HttpEntity<>(headers);
+        CurrentUserResponse currentuserinfo = new CurrentUserResponse();
 
-		try {
-			ResponseEntity<UserInfo> response = restTemplate.exchange(USERINFO, HttpMethod.GET, request,
-					UserInfo.class);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", token);
+        HttpEntity<Object> request = new HttpEntity<>(headers);
 
-			log.trace("Response Body {}", response.getBody().toString());
+        try {
+            ResponseEntity<UserInfo> response = restTemplate.exchange(USERINFO, HttpMethod.GET, request,
+                    UserInfo.class);
 
-			currentuserinfo.setUuid(response.getBody().getSub());
-			currentuserinfo.setEmailid(response.getBody().getEmail());
-			currentuserinfo.setGiven_name(response.getBody().getGiven_name());
+            log.trace("Response Body {}", response.getBody().toString());
 
-		} catch (HttpClientErrorException.Forbidden ep) {
-			log.error("Resource is forbidden");
-			throw new AccessisDeniedException("Access is Forbidden");
-		} catch (HttpClientErrorException.Unauthorized ep) {
-			throw new AccessisDeniedException("Access is denied");
-		} catch (Exception ep) {
-			throw new InternalServerError(ep.getLocalizedMessage());
-		}
+            currentuserinfo.setUuid(response.getBody().getSub());
+            currentuserinfo.setEmailid(response.getBody().getEmail());
+            currentuserinfo.setGiven_name(response.getBody().getGiven_name());
 
-		log.trace("User info {} ", currentuserinfo.toString());
+        } catch (HttpClientErrorException.Forbidden ep) {
+            log.error("Resource is forbidden");
+            throw new AccessisDeniedException("Access is Forbidden");
+        } catch (HttpClientErrorException.Unauthorized ep) {
+            throw new AccessisDeniedException("Access is denied");
+        } catch (Exception ep) {
+            throw new InternalServerError(ep.getLocalizedMessage());
+        }
 
-		return currentuserinfo;
-	}
+        log.trace("User info {} ", currentuserinfo.toString());
 
-	/*
-	 * Set up a new password for the user. password reset
-	 */
-	@Override
-	public void resetPassword(String token, String newPassword, String userId) {
+        return currentuserinfo;
+    }
 
-		String password = RandomStringUtils.random(8, charSequence);
-		Credentials newCred = new Credentials("password", password, false);
+    /*
+     * Set up a new password for the user. password reset
+     */
+    @Override
+    public void resetPassword(String token, String newPassword, String userId) {
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.add("Authorization", token);
+        String password = RandomStringUtils.random(8, charSequence);
+        Credentials newCred = new Credentials("password", password, false);
 
-		Map<String, Object> requestBody = new HashMap<>();
-		requestBody.put("type", "password");
-		requestBody.put("value", newCred);
-		requestBody.put("temporary", false);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", token);
 
-		Map<String, String> params = new HashMap<>();
-		params.put("id", userId);
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("type", "password");
+        requestBody.put("value", newCred);
+        requestBody.put("temporary", false);
 
-		HttpEntity<Object> request = new HttpEntity<>(requestBody, headers);
+        Map<String, String> params = new HashMap<>();
+        params.put("id", userId);
 
-		try {
-			ResponseEntity<?> responseobj = restTemplate.exchange(PASSRESET, HttpMethod.PUT, request, Object.class,
-					params);
+        HttpEntity<Object> request = new HttpEntity<>(requestBody, headers);
 
-			if (responseobj.getStatusCodeValue() != 204) {
-				log.error("Error while resetting the password for user ", responseobj.getStatusCodeValue());
-			} else {
-				log.info("password reset is successful");
-			}
+        try {
+            ResponseEntity<?> responseobj = restTemplate.exchange(PASSRESET, HttpMethod.PUT, request, Object.class, params);
 
-		} catch (Exception ep) {
-			log.error("Error while logout. {} ", ep.getMessage());
-		}
+            if (responseobj.getStatusCodeValue() != 204) {
+                log.error("Error while resetting the password for user ", responseobj.getStatusCodeValue());
+            } else {
+                log.info("password reset is successful");
+                //TODO Add send email logic over here.
 
-	}
+//                try {
+//                    mailSenderService.sendEmail(password, userDTO.getUserName());
+//                    returnResponse = "user created successfully , Ask suer to check his email id for credentials.";
+//                } catch (Exception exception) {
+//                    log.error("Error while sending email/sms. Please contact system admin.");
+//                    returnResponse = "user created successfully but there is problem while sending credentials to user.";
+//                }
 
-	@Override
-	public CurrentUserResponse getUserwithAttributes(String token) {
+            }
 
-		CurrentUserResponse response = this.getCurrentUserInfo(token);
+        } catch (Exception ep) {
+            log.error("Error while resetting the password for user. {} ", ep.getMessage());
+        }
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.add("Authorization", token);
-		HttpEntity<Object> request = new HttpEntity<>(headers);
+    }
 
-		ResponseEntity<UserRepresentation> userinfo = restTemplate.exchange(USERADDURL + "/" + response.getUuid(),
-				HttpMethod.GET, request, UserRepresentation.class);
+    @Override
+    public CurrentUserResponse getUserwithAttributes(String token) {
 
-		response.setEmailid(userinfo.getBody().getUsername());
-		response.setOrgRefName(userinfo.getBody().getAttributes().getOrgRefName().get(0));
+        CurrentUserResponse response = this.getCurrentUserInfo(token);
 
-		return response;
-	}
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", token);
+        HttpEntity<Object> request = new HttpEntity<>(headers);
 
-	@Override
-	public boolean deleteUser(String token, String uid) {
+        ResponseEntity<UserRepresentation> userinfo = restTemplate.exchange(USERADDURL + "/" + response.getUuid(), HttpMethod.GET, request, UserRepresentation.class);
 
-		boolean status = false;
+        response.setEmailid(userinfo.getBody().getUsername());
+        response.setOrgRefName(userinfo.getBody().getAttributes().getOrgRefName().get(0));
 
-		CurrentUserResponse response = this.getUserwithAttributes(token);
+        return response;
+    }
 
-		// response.getOrgRefName()
+    @Override
+    public boolean deleteUser(String token, String uid) {
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.add("Authorization", token);
-		HttpEntity<Object> request = new HttpEntity<>(headers);
+        boolean status = false;
 
-		try {
+        CurrentUserResponse response = this.getUserwithAttributes(token);
 
-			UserListResponse userdtl = this.getUserByUseId(uid, token);
+        // response.getOrgRefName()
 
-			if (userdtl.getAttributes() != null) {
-				if (!response.getOrgRefName().equalsIgnoreCase(userdtl.getAttributes().getOrgRefName().get(0))) {
-					throw new AccessisDeniedException("You don't have access to delete a user");
-				}
-			}
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", token);
+        HttpEntity<Object> request = new HttpEntity<>(headers);
 
-			// restTemplate.exchange(url, method, requestEntity, responseType)
-			ResponseEntity<?> deleteResponse = restTemplate.exchange(USERADDURL + "/" + uid, HttpMethod.DELETE, request,
-					Object.class);
-			if (deleteResponse.getStatusCodeValue() == 204) {
-				log.info("User was deleted successfully.");
-				status = true;
-			}
+        try {
 
-		} catch (Unauthorized ex) {
-			log.error("Unauthorized access prohibited" + ex.getLocalizedMessage());
-			throw new AccessisDeniedException(ex.getLocalizedMessage());
-		} catch (Exception ep) {
-			log.error("There is some error whiel getting the user list");
-			throw new ResourceNotFoundException("No users registered for the organization yet");
-		}
+            UserListResponse userdtl = this.getUserByUseId(uid, token);
 
-		return status;
-	}
+            if (userdtl.getAttributes() != null) {
+                if (!response.getOrgRefName().equalsIgnoreCase(userdtl.getAttributes().getOrgRefName().get(0))) {
+                    throw new AccessisDeniedException("You don't have access to delete a user");
+                }
+            }
 
-	// Delete any user -- should be for super admin profile.
-	@Override
-	public void deleteAnyUser(String token, String uuid) {
+            // restTemplate.exchange(url, method, requestEntity, responseType)
+            ResponseEntity<?> deleteResponse = restTemplate.exchange(USERADDURL + "/" + uid, HttpMethod.DELETE, request,
+                    Object.class);
+            if (deleteResponse.getStatusCodeValue() == 204) {
+                log.info("User was deleted successfully.");
+                status = true;
+            }
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.add("Authorization", token);
-		HttpEntity<Object> request = new HttpEntity<>(headers);
-		try {
-			ResponseEntity<?> deleteResponse = restTemplate.exchange(USERADDURL + "/" + uuid, HttpMethod.DELETE,
-					request, Object.class);
-			if (deleteResponse.getStatusCodeValue() == 204) {
-				log.info("User was deleted successfully.");
-			}
+        } catch (Unauthorized ex) {
+            log.error("Unauthorized access prohibited" + ex.getLocalizedMessage());
+            throw new AccessisDeniedException(ex.getLocalizedMessage());
+        } catch (Exception ep) {
+            log.error("There is some error whiel getting the user list");
+            throw new ResourceNotFoundException("No users registered for the organization yet");
+        }
 
-		} catch (Unauthorized ex) {
-			log.error("Unauthorized access prohibited" + ex.getLocalizedMessage());
-			throw new AccessisDeniedException(ex.getLocalizedMessage());
-		} catch (Exception ep) {
-			log.error("There is some error whiel getting the user list");
-			throw new ResourceNotFoundException("No users registered for the organization yet");
-		}
+        return status;
+    }
 
-	}
+    // Delete any user -- should be for super admin profile.
+    @Override
+    public void deleteAnyUser(String token, String uuid) {
 
-	// Get Organization Specific users
-	@Override
-	public List<UserListResponse> getAllUsersOrgSpecific(String token) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", token);
+        HttpEntity<Object> request = new HttpEntity<>(headers);
+        try {
+            ResponseEntity<?> deleteResponse = restTemplate.exchange(USERADDURL + "/" + uuid, HttpMethod.DELETE,
+                    request, Object.class);
+            if (deleteResponse.getStatusCodeValue() == 204) {
+                log.info("User was deleted successfully.");
+            }
 
-		CurrentUserResponse response = this.getUserwithAttributes(token);
+        } catch (Unauthorized ex) {
+            log.error("Unauthorized access prohibited" + ex.getLocalizedMessage());
+            throw new AccessisDeniedException(ex.getLocalizedMessage());
+        } catch (Exception ep) {
+            log.error("There is some error whiel getting the user list");
+            throw new ResourceNotFoundException("No users registered for the organization yet");
+        }
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.add("Authorization", token);
-		HttpEntity<Object> request = new HttpEntity<>(headers);
+    }
 
-		if (response.getOrgRefName() != null) {
+    // Get Organization Specific users
+    @Override
+    public List<UserListResponse> getAllUsersOrgSpecific(String token) {
 
-			try {
+        CurrentUserResponse response = this.getUserwithAttributes(token);
 
-				ResponseEntity<UserListResponse[]> userList = restTemplate.exchange(USERADDURL, HttpMethod.GET, request,
-						UserListResponse[].class);
-				if (userList.getStatusCodeValue() == 200) {
-					return Arrays.stream(userList.getBody()).filter(item -> (item.getAttributes() != null))
-							.filter(item -> item.getAttributes().getOrgRefName().get(0)
-									.equalsIgnoreCase(response.getOrgRefName()))
-							.collect(Collectors.toList());
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", token);
+        HttpEntity<Object> request = new HttpEntity<>(headers);
 
-				} else {
-					throw new ResourceNotFoundException("No users registered for the organization yet");
-				}
+        if (response.getOrgRefName() != null) {
 
-			} catch (Unauthorized ex) {
-				log.error("Unauthorized access prohibited" + ex.getLocalizedMessage());
-				throw new AccessisDeniedException(ex.getLocalizedMessage());
-			} catch (Exception ep) {
-				log.error("There is some error whiel getting the user list");
-				throw new ResourceNotFoundException("No users registered for the organization yet");
-			}
+            try {
 
-		} else {
-			throw new AccessisDeniedException("user not registered/access is denied");
-		}
+                ResponseEntity<UserListResponse[]> userList = restTemplate.exchange(USERADDURL, HttpMethod.GET, request,
+                        UserListResponse[].class);
+                if (userList.getStatusCodeValue() == 200) {
+                    return Arrays.stream(userList.getBody()).filter(item -> (item.getAttributes() != null))
+                            .filter(item -> item.getAttributes().getOrgRefName().get(0)
+                                    .equalsIgnoreCase(response.getOrgRefName()))
+                            .collect(Collectors.toList());
 
-	}
+                } else {
+                    throw new ResourceNotFoundException("No users registered for the organization yet");
+                }
 
-	// This will be used by super admin profile to get all users registered.
-	@Override
-	public List<UserListResponse> getAllUsers(String token) {
+            } catch (Unauthorized ex) {
+                log.error("Unauthorized access prohibited" + ex.getLocalizedMessage());
+                throw new AccessisDeniedException(ex.getLocalizedMessage());
+            } catch (Exception ep) {
+                log.error("There is some error whiel getting the user list");
+                throw new ResourceNotFoundException("No users registered for the organization yet");
+            }
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.add("Authorization", token);
-		HttpEntity<Object> request = new HttpEntity<>(headers);
+        } else {
+            throw new AccessisDeniedException("user not registered/access is denied");
+        }
 
-		try {
+    }
 
-			ResponseEntity<UserListResponse[]> userList = restTemplate.exchange(USERADDURL, HttpMethod.GET, request,
-					UserListResponse[].class);
-			if (userList.getStatusCodeValue() == 200) {
-				return Arrays.stream(userList.getBody()).collect(Collectors.toList());
-			} else {
-				throw new ResourceNotFoundException("No users registered for the organization yet");
-			}
+    // This will be used by super admin profile to get all users registered.
+    @Override
+    public List<UserListResponse> getAllUsers(String token) {
 
-		} catch (Unauthorized ex) {
-			log.error("Unauthorized access prohibited" + ex.getLocalizedMessage());
-			throw new AccessisDeniedException(ex.getLocalizedMessage());
-		} catch (Exception ep) {
-			log.error("There is some error whiel getting the user list" + ep.getLocalizedMessage());
-			throw new ResourceNotFoundException("No users registered for the organization yet");
-		}
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", token);
+        HttpEntity<Object> request = new HttpEntity<>(headers);
 
-	}
+        try {
 
-	@Override
-	public UserListResponse getUserByUseId(String uuid, String token) {
+            ResponseEntity<UserListResponse[]> userList = restTemplate.exchange(USERADDURL, HttpMethod.GET, request,
+                    UserListResponse[].class);
+            if (userList.getStatusCodeValue() == 200) {
+                return Arrays.stream(userList.getBody()).collect(Collectors.toList());
+            } else {
+                throw new ResourceNotFoundException("No users registered for the organization yet");
+            }
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.add("Authorization", token);
-		HttpEntity<Object> request = new HttpEntity<>(headers);
+        } catch (Unauthorized ex) {
+            log.error("Unauthorized access prohibited" + ex.getLocalizedMessage());
+            throw new AccessisDeniedException(ex.getLocalizedMessage());
+        } catch (Exception ep) {
+            log.error("There is some error whiel getting the user list" + ep.getLocalizedMessage());
+            throw new ResourceNotFoundException("No users registered for the organization yet");
+        }
 
-		try {
+    }
 
-			ResponseEntity<UserListResponse> response = restTemplate.exchange(USERADDURL, HttpMethod.GET, request,UserListResponse.class);
+    @Override
+    public UserListResponse getUserByUseId(String uuid, String token) {
 
-			if (response.getStatusCodeValue() == 200) {
-				return response.getBody();
-			} else {
-				log.error("There is some error whiel getting the user list. Response code : {}",
-						response.getStatusCodeValue());
-			}
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", token);
+        HttpEntity<Object> request = new HttpEntity<>(headers);
 
-		} catch (Unauthorized ex) {
-			log.error("Unauthorized access prohibited" + ex.getLocalizedMessage());
-			throw new AccessisDeniedException(ex.getLocalizedMessage());
-		} catch (Exception ep) {
-			log.error("There is some error whiel getting the user list" + ep.getLocalizedMessage());
-			throw new ResourceNotFoundException("No users registered for the organization yet");
-		}
-		return null;
-	}
+        try {
+
+            ResponseEntity<UserListResponse> response = restTemplate.exchange(USERADDURL, HttpMethod.GET, request, UserListResponse.class);
+
+            if (response.getStatusCodeValue() == 200) {
+                return response.getBody();
+            } else {
+                log.error("There is some error whiel getting the user list. Response code : {}",
+                        response.getStatusCodeValue());
+            }
+
+        } catch (Unauthorized ex) {
+            log.error("Unauthorized access prohibited" + ex.getLocalizedMessage());
+            throw new AccessisDeniedException(ex.getLocalizedMessage());
+        } catch (Exception ep) {
+            log.error("There is some error whiel getting the user list" + ep.getLocalizedMessage());
+            throw new ResourceNotFoundException("No users registered for the organization yet");
+        }
+        return null;
+    }
 
 }
