@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.asiczen.identity.management.service.MailSenderService;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -72,6 +73,9 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 
 	@Autowired
 	RestTemplate restTemplate;
+
+	@Autowired
+	MailSenderService mailSenderService;
 
 	private static final String charSequence = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -180,6 +184,7 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 		Credentials data = new Credentials("password", password, false);
 		credentials.add(data);
 
+
 		// Need to email user credentials to newly created user.
 
 		requestBody.put("credentials", credentials);
@@ -195,6 +200,7 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 			log.trace(response.toString());
 
 			if (response.getStatusCodeValue() == 201) {
+				mailSenderService.sendEmail(password, userDTO.getUserName());
 				returnResponse = "user created successfully";
 			} else {
 				returnResponse = "some issue while creating user";

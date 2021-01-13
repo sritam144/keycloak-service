@@ -29,6 +29,19 @@ spring:
           keycloak:
             issuer-uri: http://localhost:8080/auth/realms/asiczen-fleet
             user-name-attribute: preferred_username
+  mail:
+    host: smtp.gmail.com
+    username: noreply@asiczen.com
+    password: azNOreply@2018$
+    port: 587
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    protocol: smtp
+    test-connection: true
 
 logging:
   level:
@@ -51,7 +64,10 @@ keycloak:
   credentials:
     secret: d69e0013-b806-4ee1-82e3-290796d71266  
 
-
+sms.api.url: https://smsapi.24x7sms.com/api_2.0/SendSMS.aspx?
+sms.api.apikey: i3NUUQJFLDI
+sms.api.SenderID: UPRIKI
+sms.api.ServiceName: TEMPLATE_BASED
 
 #app.base.url: http://localhost:8080/auth/realms/asiczen-fleet/protocol/openid-connect/userinfo
 #app.url.token: http://localhost:8080/auth/realms/asiczen-fleet/protocol/openid-connect/token
