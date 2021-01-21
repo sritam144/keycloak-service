@@ -36,6 +36,8 @@ public interface KeyCloakService {
 
 	public List<UserListResponse> getAllUsersOrgSpecific(String token);
 
+	public UserListResponse getUserByEmailAddressOrgSpecific(String token,String emailid);
+
 	public List<UserListResponse> getAllUsers(String token);
 
 	public UserListResponse getUserByUseId(String uuid, String token);

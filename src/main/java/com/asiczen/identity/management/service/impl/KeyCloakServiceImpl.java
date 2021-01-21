@@ -475,6 +475,46 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 
     }
 
+    @Override
+    public UserListResponse getUserByEmailAddressOrgSpecific(String token, String emailId) {
+
+        CurrentUserResponse response = this.getUserwithAttributes(token);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", token);
+        HttpEntity<Object> request = new HttpEntity<>(headers);
+
+        if (response.getOrgRefName() != null) {
+
+            try {
+                ResponseEntity<UserListResponse[]> userList = restTemplate.exchange(USERADDURL, HttpMethod.GET, request, UserListResponse[].class);
+                if (userList.getStatusCodeValue() == 200) {
+                    return Arrays.stream(userList.getBody())
+                            .filter(item -> (item.getAttributes() != null))
+                            .filter(item -> item.getAttributes().getOrgRefName().get(0).equalsIgnoreCase(response.getOrgRefName()))
+                            .filter(record -> record.getUsername().equalsIgnoreCase(emailId))
+                            .findFirst().orElseThrow(() -> new ResourceNotFoundException("Invalid email id " + emailId));
+
+
+                } else {
+                    throw new ResourceNotFoundException("No users registered for the organization yet");
+                }
+
+            } catch (Unauthorized ex) {
+                log.error("Unauthorized access prohibited" + ex.getLocalizedMessage());
+                throw new AccessisDeniedException(ex.getLocalizedMessage());
+            } catch (Exception ep) {
+                log.error("There is some error whiel getting the user list");
+                throw new ResourceNotFoundException("No users registered for the organization yet");
+            }
+
+        } else {
+            throw new AccessisDeniedException("user not registered/access is denied");
+        }
+
+    }
+
     // This will be used by super admin profile to get all users registered.
     @Override
     public List<UserListResponse> getAllUsers(String token) {
