@@ -491,9 +491,9 @@ public class KeyCloakServiceImpl implements KeyCloakService {
                 ResponseEntity<UserListResponse[]> userList = restTemplate.exchange(USERADDURL, HttpMethod.GET, request, UserListResponse[].class);
                 if (userList.getStatusCodeValue() == 200) {
                     return Arrays.stream(userList.getBody())
+                            .filter(record -> record.getUsername().equalsIgnoreCase(emailId))
                             .filter(item -> (item.getAttributes() != null))
                             .filter(item -> item.getAttributes().getOrgRefName().get(0).equalsIgnoreCase(response.getOrgRefName()))
-                            .filter(record -> record.getUsername().equalsIgnoreCase(emailId))
                             .findFirst().orElseThrow(() -> new ResourceNotFoundException("Invalid email id " + emailId));
 
 
@@ -559,8 +559,7 @@ public class KeyCloakServiceImpl implements KeyCloakService {
             if (response.getStatusCodeValue() == 200) {
                 return response.getBody();
             } else {
-                log.error("There is some error whiel getting the user list. Response code : {}",
-                        response.getStatusCodeValue());
+                log.error("There is some error while getting the user list. Response code : {}", response.getStatusCodeValue());
             }
 
         } catch (Unauthorized ex) {
