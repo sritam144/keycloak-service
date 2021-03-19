@@ -19,5 +19,5 @@ public class Attributes {
 	private List<String> orgRefName = null;
 
 	@JsonProperty("contactNumber")
-	private List<String> contactnumber = null;
+	private List<String> contactNumber = null;
 }

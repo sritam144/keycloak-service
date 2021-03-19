@@ -72,9 +72,9 @@ sms.api.ServiceName: TEMPLATE_BASED
 #app.base.url: http://localhost:8080/auth/realms/asiczen-fleet/protocol/openid-connect/userinfo
 #app.url.token: http://localhost:8080/auth/realms/asiczen-fleet/protocol/openid-connect/token
 #app.url.user: http://localhost:8080/auth/admin/realms/asiczen-fleet/users
-app.base.url: http://localhost:8080/auth/realms/asiczen-fleet/protocol/openid-connect
+app.base.url: http://localhost:8090/auth/realms/scorpious_fleet/protocol/openid-connect
 app.url.token: ${app.base.url}/token
 app.url.userinfo: ${app.base.url}/userinfo
-app.url.user: http://localhost:8080/auth/admin/realms/asiczen-fleet/users
-app.url.logout: http://localhost:8080/auth/admin/realms/asiczen-fleet/users/{id}/logout
-app.url.passreset: http://localhost:8080/auth/admin/realms/asiczen-fleet/users/{id}/reset-password     
+app.url.user: http://localhost:8090/auth/admin/realms/scorpious_fleet/users
+app.url.logout: http://localhost:8090/auth/admin/realms/scorpious_fleet/users/{id}/logout
+app.url.passreset: http://localhost:8090/auth/admin/realms/scorpious_fleet/users/{id}/reset-password

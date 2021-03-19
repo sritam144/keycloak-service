@@ -2,6 +2,7 @@ package com.asiczen.identity.management.service;
 
 import java.util.List;
 
+import com.asiczen.identity.management.request.UpdateUserDto;
 import org.springframework.stereotype.Service;
 
 import com.asiczen.identity.management.request.UserCredentials;
@@ -41,5 +42,9 @@ public interface KeyCloakService {
 	public List<UserListResponse> getAllUsers(String token);
 
 	public UserListResponse getUserByUseId(String uuid, String token);
+
+	public String setRoleMapping(String token);
+
+	public String updateUserDetails(UpdateUserDto userDTO, String token);
 
 }

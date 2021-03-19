@@ -2,18 +2,12 @@ package com.asiczen.identity.management.controller;
 
 import javax.validation.Valid;
 
+import com.asiczen.identity.management.request.UpdateUserDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.asiczen.identity.management.request.UserCredentials;
 import com.asiczen.identity.management.request.UserDto;
@@ -45,7 +39,7 @@ public class KeyCloakController {
     }
 
     @PostMapping(value = "/createuser")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    //@PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<?> createUserinKeyCloak(@Valid @RequestBody UserDto userDto, @RequestHeader String Authorization) {
 
         log.trace("Token is --->" + Authorization);
@@ -70,7 +64,7 @@ public class KeyCloakController {
     }
 
     @GetMapping(value = "/update/password")
-    public ResponseEntity<?> updatePassword(@RequestHeader String Authorization, String newPassword, String uuid) {
+    public ResponseEntity<?> updatePassword(@RequestHeader String Authorization, @RequestParam String newPassword, @RequestParam String uuid) {
         keyClockService.resetPassword(Authorization, newPassword, uuid);
         return new ResponseEntity<>("Your password has been successfully updated!", HttpStatus.OK);
 
@@ -96,6 +90,16 @@ public class KeyCloakController {
     @GetMapping(value = "/finduser")
     public ResponseEntity<?> getUserByEmail(@RequestHeader String Authorization, @RequestParam String emailId) {
         return new ResponseEntity<>(keyClockService.getUserByEmailAddressOrgSpecific(Authorization, emailId), HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/rolemapping")
+    public ResponseEntity<?> setRoleMapping(@RequestHeader String Authorization) {
+        return new ResponseEntity<>(keyClockService.setRoleMapping(Authorization), HttpStatus.OK);
+    }
+
+    @PutMapping(value = "/update/user")
+    public ResponseEntity<?> updateUser(@Valid @RequestBody UpdateUserDto userDto, @RequestHeader String Authorization) {
+        return new ResponseEntity<>(keyClockService.updateUserDetails(userDto,Authorization), HttpStatus.OK);
     }
 
 }

@@ -23,16 +23,19 @@ public class MailSenderServiceImpl implements MailSenderService {
     public void sendEmail(String password, String to) {
         MimeMessage message = sender.createMimeMessage();
         try {
+            log.info("Send mail");
             MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
             helper.setTo(to);
             helper.setText(password, true);
             helper.setSubject("Password from AzTracker");
             helper.setFrom("noreply@asiczen.com");
+            log.info("Before send mail");
             sender.send(message);
+            log.info("after send mail");
 
         } catch (MessagingException e) {
-            log.error("Error while sending email");
-            log.error(e.getLocalizedMessage());
+            log.info("Error while sending email");
+            log.info(e.getLocalizedMessage());
         }
     }
 

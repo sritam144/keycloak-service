@@ -1,14 +1,18 @@
 package com.asiczen.identity.management.service.impl;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.asiczen.identity.management.dto.*;
+import com.asiczen.identity.management.request.UpdateUserDto;
 import com.asiczen.identity.management.service.MailSenderService;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.keycloak.OAuth2Constants;
+import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.KeycloakBuilder;
+import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.representations.idm.RoleRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -23,9 +27,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpClientErrorException.Unauthorized;
 import org.springframework.web.client.RestTemplate;
 
-import com.asiczen.identity.management.dto.Credentials;
-import com.asiczen.identity.management.dto.UserInfo;
-import com.asiczen.identity.management.dto.UserRepresentation;
 import com.asiczen.identity.management.exception.AccessisDeniedException;
 import com.asiczen.identity.management.exception.InternalServerError;
 import com.asiczen.identity.management.exception.ResourceAlreadyExistException;
@@ -70,6 +71,7 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 
     @Value("${app.url.passreset}")
     private String PASSRESET;
+
 
     @Autowired
     RestTemplate restTemplate;
@@ -172,10 +174,26 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 
         /* Set Attributes */
         Map<String, String> attributes = new HashMap<>();
-        attributes.put("contact", userDTO.getContactNumber());
+        attributes.put("contactNumber", userDTO.getContactNumber());
         attributes.put("orgRefName", userDTO.getOrgRefName());
 
         requestBody.put("attributes", attributes);
+
+        /*Set Realm role */
+        List<String> realmRoles = new ArrayList<>();
+        realmRoles.add("ROLE_ADMIN");
+        realmRoles.add("ROLE_USER");
+
+        requestBody.put("realmRoles",realmRoles);
+
+        /*Set client role */
+        Map<String, List<String>> clientRoles = new HashMap<>();
+        List<String> cRoles = new ArrayList<>();
+        cRoles.add("ROLE_ADMIN");
+        cRoles.add("ROLE_USER");
+        clientRoles.put("springboot-microservice",cRoles);
+
+        requestBody.put("clientRoles",clientRoles);
 
         /* Set password */
         List<Credentials> credentials = new ArrayList<>();
@@ -194,16 +212,17 @@ public class KeyCloakServiceImpl implements KeyCloakService {
         try {
 
             ResponseEntity<String> response = restTemplate.postForEntity(USERADDURL, request, String.class);
-            log.trace(response.getStatusCode().toString());
-            log.trace(response.getHeaders().toString());
-            log.trace(response.getBody());
-            log.trace(response.toString());
+            log.info(response.getStatusCode().toString());
+            log.info(response.getHeaders().toString());
+            log.info(response.getBody());
+            log.info(response.toString());
 
             if (response.getStatusCodeValue() == 201) {
                 try {
                     mailSenderService.sendEmail(password, userDTO.getUserName());
                     returnResponse = "user created successfully , Ask suer to check his email id for credentials.";
                 } catch (Exception exception) {
+                    log.info("after create user");
                     log.error("Error while sending email/sms. Please contact system admin.");
                     returnResponse = "user created successfully but there is problem while sending credentials to user.";
                 }
@@ -221,11 +240,14 @@ public class KeyCloakServiceImpl implements KeyCloakService {
                     "user name already registered in system {}" + userDTO.getUserName());
 
         } catch (HttpClientErrorException.Forbidden ep) {
+            log.info("server error 1");
             log.error("Resource is forbidden for user {}", userDTO.getUserName());
             throw new AccessisDeniedException("Access is denied");
         } catch (HttpClientErrorException.Unauthorized ep) {
+            log.info("Server error 2");
             throw new AccessisDeniedException("Access is denied");
         } catch (Exception ep) {
+            log.info("Server error 3");
             throw new InternalServerError(ep.getLocalizedMessage());
         }
 
@@ -315,7 +337,7 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("type", "password");
-        requestBody.put("value", newCred);
+        requestBody.put("value", newPassword);
         requestBody.put("temporary", false);
 
         Map<String, String> params = new HashMap<>();
@@ -421,9 +443,9 @@ public class KeyCloakServiceImpl implements KeyCloakService {
             ResponseEntity<?> deleteResponse = restTemplate.exchange(USERADDURL + "/" + uuid, HttpMethod.DELETE,
                     request, Object.class);
             if (deleteResponse.getStatusCodeValue() == 204) {
+
                 log.info("User was deleted successfully.");
             }
-
         } catch (Unauthorized ex) {
             log.error("Unauthorized access prohibited" + ex.getLocalizedMessage());
             throw new AccessisDeniedException(ex.getLocalizedMessage());
@@ -571,5 +593,198 @@ public class KeyCloakServiceImpl implements KeyCloakService {
         }
         return null;
     }
+
+    @Override
+    public String setRoleMapping(String token) {
+        String returnResponse = null;
+
+        log.trace("Controller came here");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", token);
+        log.info(token);
+
+        List<RoleRepresentation> roleRepresentations = new ArrayList<>();
+
+        RoleRepresentation roleRepresentation = new RoleRepresentation();
+
+
+
+        /*Set Realm role */
+        Set<String> realmRoles = new HashSet<>();
+        realmRoles.add("ROLE_ADMIN");
+        realmRoles.add("ROLE_USER");
+
+
+        /*Set client role */
+        Map<String, List<String>> clientRoles = new HashMap<>();
+        List<String> rolesList = new ArrayList<>();
+        rolesList.add("ROLE_ADMIN");
+        rolesList.add("ROLE_USER");
+        clientRoles.put("springboot-microservice", rolesList);
+
+
+        RoleRepresentation.Composites composites = new RoleRepresentation.Composites();
+        composites.setRealm(realmRoles);
+        composites.setClient(clientRoles);
+        roleRepresentation.setComposites(composites);
+
+        roleRepresentation.setComposite(true);
+        roleRepresentation.setClientRole(true);
+
+        roleRepresentation.setName("ROLE_ADMIN");
+        roleRepresentation.setContainerId("scorpious_fleet");
+
+        roleRepresentations.add(roleRepresentation);
+
+       // roles.add(requestBody);
+
+
+        HttpEntity<Object> request = new HttpEntity<>(roleRepresentations, headers);
+
+        String url = "http://localhost:8090/auth/admin/realms/scorpious_fleet/users/fba4dfcd-7ebf-4cd2-b80f-1a14c5475341/role-mappings/realm";
+
+        //String url = "http://localhost:8090/auth/admin/realms/scorpious_fleet/users/bc4ea0f5-e723-4313-9cdb-063986a9d5b5/role-mappings/clients/c4dd3ca2-9695-4f48-91e9-cd6a2fabfa4e";
+
+        try {
+
+            ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
+            log.info(response.getStatusCode().toString());
+            log.info(response.getHeaders().toString());
+            log.info(response.getBody());
+            log.info(response.toString());
+
+            if (response.getStatusCodeValue() == 201) {
+                try {
+
+                    returnResponse = "user created successfully , Ask suer to check his email id for credentials.";
+                } catch (Exception exception) {
+                    log.error("Error while sending email/sms. Please contact system admin.");
+                    returnResponse = "user created successfully but there is problem while sending credentials to user.";
+                }
+
+            } else {
+                returnResponse = "some issue while creating user , please try again in some time. If the issue persists please contact system admin.";
+            }
+
+            return returnResponse;
+
+        } catch (HttpClientErrorException.Conflict cep) {
+
+            log.error(cep.getMessage());
+            throw new ResourceAlreadyExistException(
+                    "user name already registered in system ");
+
+        } catch (HttpClientErrorException.Forbidden ep) {
+            log.error("Resource is forbidden for user ");
+            throw new AccessisDeniedException("Access is denied");
+        } catch (HttpClientErrorException.Unauthorized ep) {
+            throw new AccessisDeniedException("Access is denied");
+        } catch (Exception ep) {
+            log.info("Internal server error");
+            throw new InternalServerError(ep.getLocalizedMessage());
+        }
+    }
+
+    @Override
+    public String updateUserDetails(UpdateUserDto userDTO, String token) {
+
+        String returnResponse = null;
+
+        log.trace("Controller came here");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", token);
+        log.info(token);
+
+        Map<String, Object> requestBody = new HashMap<>();
+
+        log.info(userDTO.toString());
+
+        requestBody.put("email", userDTO.getUsername());
+        requestBody.put("username", userDTO.getUsername());
+        requestBody.put("firstName", userDTO.getFirstName());
+        requestBody.put("lastName", userDTO.getLastName());
+        requestBody.put("enabled", true);
+
+        /* Set Attributes */
+        Map<String, String> attributes = new HashMap<>();
+        attributes.put("contact", userDTO.getContactNumber());
+        attributes.put("orgRefName", userDTO.getOrgRefName());
+
+        requestBody.put("attributes", attributes);
+
+        /*Set Realm role */
+        List<String> realmRoles = new ArrayList<>();
+        realmRoles.add("ROLE_ADMIN");
+        realmRoles.add("ROLE_USER");
+
+        requestBody.put("realmRoles",realmRoles);
+
+        /*Set client role */
+        Map<String, List<String>> clientRoles = new HashMap<>();
+        List<String> cRoles = new ArrayList<>();
+        cRoles.add("ROLE_ADMIN");
+        cRoles.add("ROLE_USER");
+        clientRoles.put("springboot-microservice",cRoles);
+
+        requestBody.put("clientRoles",clientRoles);
+
+        /* Set password */
+        List<Credentials> credentials = new ArrayList<>();
+
+        String password = RandomStringUtils.random(8, charSequence);
+        Credentials data = new Credentials("password", password, false);
+        credentials.add(data);
+
+
+        // Need to email user credentials to newly created user.
+
+        requestBody.put("credentials", credentials);
+
+        HttpEntity<Object> request = new HttpEntity<>(requestBody, headers);
+
+        try {
+
+            ResponseEntity<String> response = restTemplate.exchange(USERADDURL + "/" + userDTO.getId(), HttpMethod.PUT, request, String.class);
+            log.trace(response.getStatusCode().toString());
+            log.trace(response.getHeaders().toString());
+            log.trace(response.getBody());
+            log.trace(response.toString());
+
+            if (201 == 201) {
+                try {
+                   // mailSenderService.sendEmail(password, userDTO.getUserName());
+                    returnResponse = "user created successfully , Ask suer to check his email id for credentials.";
+                } catch (Exception exception) {
+                    log.error("Error while sending email/sms. Please contact system admin.");
+                    returnResponse = "user created successfully but there is problem while sending credentials to user.";
+                }
+
+            } else {
+                returnResponse = "some issue while creating user , please try again in some time. If the issue persists please contact system admin.";
+            }
+
+            return returnResponse;
+
+        } catch (HttpClientErrorException.Conflict cep) {
+            log.error("User already present in the system with {} user name", userDTO.getUsername());
+            log.error(cep.getMessage());
+            throw new ResourceAlreadyExistException(
+                    "user name already registered in system {}" + userDTO.getUsername());
+
+        } catch (HttpClientErrorException.Forbidden ep) {
+            log.error("Resource is forbidden for user {}", userDTO.getUsername());
+            throw new AccessisDeniedException("Access is denied");
+        } catch (HttpClientErrorException.Unauthorized ep) {
+            throw new AccessisDeniedException("Access is denied");
+        } catch (Exception ep) {
+            throw new InternalServerError(ep.getLocalizedMessage());
+        }
+
+    }
+
 
 }
