@@ -13,6 +13,7 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.RoleRepresentation;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -237,7 +238,7 @@ public class KeyCloakServiceImpl implements KeyCloakService {
             log.error("User already present in the system with {} user name", userDTO.getUserName());
             log.error(cep.getMessage());
             throw new ResourceAlreadyExistException(
-                    "user name already registered in system {}" + userDTO.getUserName());
+                    "User email already registered in system " + userDTO.getUserName());
 
         } catch (HttpClientErrorException.Forbidden ep) {
             log.info("server error 1");
@@ -477,6 +478,7 @@ public class KeyCloakServiceImpl implements KeyCloakService {
                     return Arrays.stream(userList.getBody()).filter(item -> (item.getAttributes() != null))
                             .filter(item -> item.getAttributes().getOrgRefName().get(0)
                                     .equalsIgnoreCase(response.getOrgRefName()))
+                            .map(this::updateUsersList)
                             .collect(Collectors.toList());
 
                 } else {
@@ -495,6 +497,14 @@ public class KeyCloakServiceImpl implements KeyCloakService {
             throw new AccessisDeniedException("user not registered/access is denied");
         }
 
+    }
+
+    private UserListResponse updateUsersList(UserListResponse userListResponse) {
+        UserListResponse userListResponseForUuid = new UserListResponse();
+        BeanUtils.copyProperties(userListResponse,userListResponseForUuid);
+        userListResponseForUuid.setUuid(userListResponse.getId());
+
+        return userListResponseForUuid;
     }
 
     @Override
@@ -551,7 +561,9 @@ public class KeyCloakServiceImpl implements KeyCloakService {
             ResponseEntity<UserListResponse[]> userList = restTemplate.exchange(USERADDURL, HttpMethod.GET, request,
                     UserListResponse[].class);
             if (userList.getStatusCodeValue() == 200) {
-                return Arrays.stream(userList.getBody()).collect(Collectors.toList());
+                return Arrays.stream(userList.getBody())
+                        .map(this::updateUsersList)
+                        .collect(Collectors.toList());
             } else {
                 throw new ResourceNotFoundException("No users registered for the organization yet");
             }
@@ -711,7 +723,7 @@ public class KeyCloakServiceImpl implements KeyCloakService {
 
         /* Set Attributes */
         Map<String, String> attributes = new HashMap<>();
-        attributes.put("contact", userDTO.getContactNumber());
+        attributes.put("contactNumber", userDTO.getContactNumber());
         attributes.put("orgRefName", userDTO.getOrgRefName());
 
         requestBody.put("attributes", attributes);
